@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Webcam Emilia-Romagna</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    padding: 32px 16px 64px;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  .back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: #0071e3; text-decoration: none; margin-bottom: 18px; }
+  h1 { font-size: 13px; font-weight: 500; color: #6e6e73; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px; }
+  h2 { font-size: 26px; font-weight: 600; margin: 0 0 24px; letter-spacing: -0.02em; }
+  .section-title { font-size: 15px; font-weight: 600; margin: 32px 0 14px; }
+  .section-title:first-of-type { margin-top: 0; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .cam {
+    background: #fff; border-radius: 16px; overflow: hidden;
+    border: 0.5px solid rgba(0,0,0,0.06); position: relative;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .cam:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
+  .cam img { width: 100%; height: 150px; object-fit: cover; display: block; background: #e5e5ea; }
+  .cam.offline img { opacity: 0.25; }
+  .cam.offline::after {
+    content: "Non disponibile"; position: absolute; top: 60px; left: 0; right: 0;
+    text-align: center; font-size: 12px; color: #86868b;
+  }
+  .cam .body { padding: 10px 12px; }
+  .cam .name { font-size: 13px; font-weight: 600; margin: 0 0 2px; line-height: 1.3; }
+  .cam .zone { font-size: 11px; color: #86868b; margin: 0; }
+  .cam a.open {
+    position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.45); color: #fff;
+    border-radius: 8px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+    text-decoration: none; font-size: 13px; z-index: 2;
+  }
+
+  footer { text-align: center; font-size: 12px; color: #a1a1a6; margin-top: 40px; }
+
+  .cam img { cursor: zoom-in; }
+
+  #lightbox {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.72);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999; opacity: 0; pointer-events: none;
+    transition: opacity 0.18s ease;
+  }
+  #lightbox.show { opacity: 1; pointer-events: auto; }
+  #lightbox img {
+    max-width: 90vw; max-height: 85vh; border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    transform: scale(0.96); transition: transform 0.18s ease;
+  }
+  #lightbox.show img { transform: scale(1); }
+  #lightbox .caption {
+    position: absolute; bottom: 28px; left: 0; right: 0; text-align: center;
+    color: #fff; font-size: 14px; font-weight: 500; text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="../index.html"><i class="ti ti-chevron-left" aria-hidden="true"></i> Weather Commander</a>
+  <h1>Modulo</h1>
+  <h2>Webcam Emilia-Romagna</h2>
+
+  <!--
+    ============================================================
+    COME AGGIUNGERE UNA NUOVA WEBCAM
+    ============================================================
+    Copia il blocco qui sotto dentro la sezione <div class="grid"> ... </div>
+    che preferisci (Emilia-Romagna o Altre regioni) e modifica i valori.
+    Pagina tutta statica: non serve toccare CSS o JavaScript.
+
+      <div class="cam">
+        <a class="open" href="URL_IMMAGINE" target="_blank" rel="noopener" title="Apri originale">
+          <i class="ti ti-external-link" aria-hidden="true"></i>
+        </a>
+        <img src="URL_IMMAGINE" loading="lazy" alt="Webcam NOME" onerror="this.parentElement.classList.add('offline')">
+        <div class="body">
+          <p class="name">NOME WEBCAM</p>
+          <p class="zone">ZONA/PROVINCIA</p>
+        </div>
+      </div>
+
+    Suggerimento per trovare l'URL dell'immagine: apri la webcam sul sito
+    sorgente, tasto destro sull'immagine -> "copia indirizzo immagine".
+    Se una webcam smette di funzionare, la card lo segnala da sola
+    (l'immagine si scurisce con scritto "Non disponibile") grazie
+    all'attributo onerror -- non serve controllarle a mano una per una.
+    ============================================================
+  -->
+
+  <p class="section-title">Emilia-Romagna</p>
+  <div class="grid">
+
+    <div class="cam">
+      <a class="open" href="http://www.reggioemiliameteo.it/webcam/reggio/reggio.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.reggioemiliameteo.it/webcam/reggio/reggio.jpg" loading="lazy" alt="Webcam Reggio Emilia San Pietro" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Reggio Emilia San Pietro</p>
+        <p class="zone">Reggio Emilia</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.reggioemiliameteo.it/webcam/novellara/novellara.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.reggioemiliameteo.it/webcam/novellara/novellara.jpg" loading="lazy" alt="Webcam Novellara" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Novellara</p>
+        <p class="zone">Reggio Emilia</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.reggioemiliameteo.it/webcam/sorgentisecchia/sorgentisecchia.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.reggioemiliameteo.it/webcam/sorgentisecchia/sorgentisecchia.jpg" loading="lazy" alt="Webcam Sorgenti del Secchia" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Sorgenti del Secchia</p>
+        <p class="zone">Appennino Reggiano</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.reggioemiliameteo.it/webcam/bismantova/pietra.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.reggioemiliameteo.it/webcam/bismantova/pietra.jpg" loading="lazy" alt="Webcam Pietra di Bismantova" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Pietra di Bismantova</p>
+        <p class="zone">Appennino Reggiano</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.reggioemiliameteo.it/webcam/toano/toano.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.reggioemiliameteo.it/webcam/toano/toano.jpg" loading="lazy" alt="Webcam Toano" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Toano</p>
+        <p class="zone">Appennino Reggiano</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.reggioemiliameteo.it/webcam/gazzata/gazzata.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.reggioemiliameteo.it/webcam/gazzata/gazzata.jpg" loading="lazy" alt="Webcam Gazzata" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Gazzata</p>
+        <p class="zone">Appennino Reggiano</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.reggioemiliameteo.it/webcam/cerretolaghi/cerretolaghi.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.reggioemiliameteo.it/webcam/cerretolaghi/cerretolaghi.jpg" loading="lazy" alt="Webcam Cerreto Laghi" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Cerreto Laghi</p>
+        <p class="zone">Appennino Reggiano</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.reggioemiliameteo.it/webcam/rifugiobattisti-sw/rifugiobattisti-sw.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.reggioemiliameteo.it/webcam/rifugiobattisti-sw/rifugiobattisti-sw.jpg" loading="lazy" alt="Webcam Rifugio Battisti Sud" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Rifugio Battisti Sud</p>
+        <p class="zone">Appennino Reggiano</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.reggioemiliameteo.it/webcam/rifugiobattisti-nw/rifugiobattisti-nw.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.reggioemiliameteo.it/webcam/rifugiobattisti-nw/rifugiobattisti-nw.jpg" loading="lazy" alt="Webcam Rifugio Battisti Nord" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Rifugio Battisti Nord</p>
+        <p class="zone">Appennino Reggiano</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.reggioemiliameteo.it/webcam/valleinferno/valleinferno.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.reggioemiliameteo.it/webcam/valleinferno/valleinferno.jpg" loading="lazy" alt="Webcam Valle Inferno" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Valle Inferno</p>
+        <p class="zone">Appennino Reggiano</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.reggioemiliameteo.it/webcam/casina/casina.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.reggioemiliameteo.it/webcam/casina/casina.jpg" loading="lazy" alt="Webcam Casina" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Casina</p>
+        <p class="zone">Reggio Emilia</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.reggioemiliameteo.it/webcam/cusna/cusna.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.reggioemiliameteo.it/webcam/cusna/cusna.jpg" loading="lazy" alt="Webcam Monte Cusna" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Monte Cusna</p>
+        <p class="zone">Appennino Reggiano</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.reggioemiliameteo.it/webcam/boretto/boretto.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.reggioemiliameteo.it/webcam/boretto/boretto.jpg" loading="lazy" alt="Webcam Po Boretto" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Po Boretto</p>
+        <p class="zone">Reggio Emilia</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.cmelettroimpianti.it/webcam/civago000M.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.cmelettroimpianti.it/webcam/civago000M.jpg" loading="lazy" alt="Webcam Civago" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Civago</p>
+        <p class="zone">Appennino Reggiano</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.reggioemiliameteo.it/webcam/reggio-sanprospero/reggio-sanprospero.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.reggioemiliameteo.it/webcam/reggio-sanprospero/reggio-sanprospero.jpg" loading="lazy" alt="Webcam Reggio Emilia San Prospero" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Reggio Emilia San Prospero</p>
+        <p class="zone">Reggio Emilia</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.reggioemiliameteo.it/webcam/felina/felina.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.reggioemiliameteo.it/webcam/felina/felina.jpg" loading="lazy" alt="Webcam Felina" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Felina</p>
+        <p class="zone">Appennino Reggiano</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.comune.re.it/webcam.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.comune.re.it/webcam.jpg" loading="lazy" alt="Webcam Reggio Emilia Comune" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Reggio Emilia Comune</p>
+        <p class="zone">Reggio Emilia</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.meteoproject.it/ftp/webcam/medicina2/medicina.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.meteoproject.it/ftp/webcam/medicina2/medicina.jpg" loading="lazy" alt="Webcam Medicina" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Medicina</p>
+        <p class="zone">Bologna</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://meteo.unimore.it/meteo/ossgeo/modena.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://meteo.unimore.it/meteo/ossgeo/modena.jpg" loading="lazy" alt="Webcam Modena" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Modena</p>
+        <p class="zone">Modena</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.meteosestola.it/crocearcana.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.meteosestola.it/crocearcana.jpg" loading="lazy" alt="Webcam Passo Croce Arcana" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Passo Croce Arcana</p>
+        <p class="zone">Appennino Modenese</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.centrofondolamamocogno.it/meteo/pianecam2.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.centrofondolamamocogno.it/meteo/pianecam2.jpg" loading="lazy" alt="Webcam Piana di Lama Mocogno" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Piana di Lama Mocogno</p>
+        <p class="zone">Appennino Modenese</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.comune.carpi.mo.it/webcam1/current.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.comune.carpi.mo.it/webcam1/current.jpg" loading="lazy" alt="Webcam Carpi" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Carpi</p>
+        <p class="zone">Modena</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.meteosestola.it/sestola.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.meteosestola.it/sestola.jpg" loading="lazy" alt="Webcam Sestola" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Sestola</p>
+        <p class="zone">Appennino Modenese</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.meteosestola.it/cimone.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.meteosestola.it/cimone.jpg" loading="lazy" alt="Webcam Cimone" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Cimone</p>
+        <p class="zone">Appennino Modenese</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.bellariameteo.it/webcam_cola/cam4.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.bellariameteo.it/webcam_cola/cam4.jpg" loading="lazy" alt="Webcam Bellaria Mare Nord" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Bellaria Mare Nord</p>
+        <p class="zone">Rimini</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.bellariameteo.it/public/cam4b/cam44.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.bellariameteo.it/public/cam4b/cam44.jpg" loading="lazy" alt="Webcam Bellaria Mare EST" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Bellaria Mare EST</p>
+        <p class="zone">Rimini</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.adriaticowindclub.com/meteoawc/AWC3.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.adriaticowindclub.com/meteoawc/AWC3.jpg" loading="lazy" alt="Webcam Cervia Spiaggia" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Cervia Spiaggia</p>
+        <p class="zone">Ravenna</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.circolonauticocervia.it/webcam/webcam_home.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.circolonauticocervia.it/webcam/webcam_home.jpg" loading="lazy" alt="Webcam Cervia Porto" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Cervia Porto</p>
+        <p class="zone">Ravenna</p>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="section-title">Altre regioni</p>
+  <div class="grid">
+
+    <div class="cam">
+      <a class="open" href="https://www.xposta.it/parco/lagosanto/datiwebcam/lagosanto.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.xposta.it/parco/lagosanto/datiwebcam/lagosanto.jpg" loading="lazy" alt="Webcam Lago Santo" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Lago Santo</p>
+        <p class="zone">Appennino</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.meteogarda.it/bardolino/bardolino.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.meteogarda.it/bardolino/bardolino.jpg" loading="lazy" alt="Webcam Bardolino" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Bardolino</p>
+        <p class="zone">Lago di Garda</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.predameteo.it/predazzo.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.predameteo.it/predazzo.jpg" loading="lazy" alt="Webcam Predazzo" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Predazzo</p>
+        <p class="zone">Trentino</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.meteo-system.com/stazioni/sestriere/sestriere.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.meteo-system.com/stazioni/sestriere/sestriere.jpg" loading="lazy" alt="Webcam Sestriere" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Sestriere</p>
+        <p class="zone">Piemonte</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.lovevda.it/Media/Cache/Webcam/big_ao1.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.lovevda.it/Media/Cache/Webcam/big_ao1.jpg" loading="lazy" alt="Webcam Aosta" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Aosta</p>
+        <p class="zone">Valle d&#x27;Aosta</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.panoramawebcam.it/live/lagonambino/index.php" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.panoramawebcam.it/live/lagonambino/index.php" loading="lazy" alt="Webcam Rifugio Lago di Nambino" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Rifugio Lago di Nambino</p>
+        <p class="zone">Trentino</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.abetone.com/webcamabetone/webcam.aspx" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.abetone.com/webcamabetone/webcam.aspx" loading="lazy" alt="Webcam Abetone" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Abetone</p>
+        <p class="zone">Toscana</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.meteolaigueglia.altervista.org/webcam/FI9900P_00626EA2FD7D/snap/webcam.php" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.meteolaigueglia.altervista.org/webcam/FI9900P_00626EA2FD7D/snap/webcam.php" loading="lazy" alt="Webcam Santuario Laigueglie" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Santuario Laigueglie</p>
+        <p class="zone">Liguria</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://tweb.tecnoworldgroup.it/infogate.it/webcam-meteo/images/webcams/Sa01.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://tweb.tecnoworldgroup.it/infogate.it/webcam-meteo/images/webcams/Sa01.jpg" loading="lazy" alt="Webcam Santuario Sant&#x27;Anna di Vinadio" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Santuario Sant&#x27;Anna di Vinadio</p>
+        <p class="zone">Piemonte</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://auronzomisurina.altervista.org/webcam/misurina-lago.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://auronzomisurina.altervista.org/webcam/misurina-lago.jpg" loading="lazy" alt="Webcam Lago di Misurina" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Lago di Misurina</p>
+        <p class="zone">Veneto</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://meteocastelliwebcam.altervista.org/foicam/albano1/webcam.php" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://meteocastelliwebcam.altervista.org/foicam/albano1/webcam.php" loading="lazy" alt="Webcam Lago Albano (Roma)" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Lago Albano (Roma)</p>
+        <p class="zone">Lazio</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://elisabetta.cam.torinometeo.org/24h/1/last.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://elisabetta.cam.torinometeo.org/24h/1/last.jpg" loading="lazy" alt="Webcam Santuario di Santa Elisabetta Torino" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Santuario di Santa Elisabetta Torino</p>
+        <p class="zone">Piemonte</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://reschenpass.it-wms.com/big_current1.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://reschenpass.it-wms.com/big_current1.jpg" loading="lazy" alt="Webcam Lago di Resia" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Lago di Resia</p>
+        <p class="zone">Trentino-Alto Adige</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.montagnaitalia.it/webcam/original/SanVito.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.montagnaitalia.it/webcam/original/SanVito.jpg" loading="lazy" alt="Webcam San Vito in Cadore" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">San Vito in Cadore</p>
+        <p class="zone">Veneto</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://webcam.isolaelba.tv/hotelilio/current.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://webcam.isolaelba.tv/hotelilio/current.jpg" loading="lazy" alt="Webcam Isola d&#x27;Elba" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Isola d&#x27;Elba</p>
+        <p class="zone">Toscana</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.meteoteatromassimo.it/webcam/ctm_snap.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.meteoteatromassimo.it/webcam/ctm_snap.jpg" loading="lazy" alt="Webcam Palermo Teatro Massimo" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Palermo Teatro Massimo</p>
+        <p class="zone">Sicilia</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://webcam.bel3.com/images/ccam.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://webcam.bel3.com/images/ccam.jpg" loading="lazy" alt="Webcam Vista di Palermo" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Vista di Palermo</p>
+        <p class="zone">Sicilia</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://www.pietrotroja.eu/info/webcam/capaci.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://www.pietrotroja.eu/info/webcam/capaci.jpg" loading="lazy" alt="Webcam Sicilia Isola delle Femmine" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Sicilia Isola delle Femmine</p>
+        <p class="zone">Sicilia</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://images.webcamgalore.com/25992-current-webcam-Levanzo.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://images.webcamgalore.com/25992-current-webcam-Levanzo.jpg" loading="lazy" alt="Webcam Isole Egadi" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Isole Egadi</p>
+        <p class="zone">Sicilia</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.meteosantamaria.it/turret/webcam-ridotta.php" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.meteosantamaria.it/turret/webcam-ridotta.php" loading="lazy" alt="Webcam Santa Maria degli Angeli" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Santa Maria degli Angeli</p>
+        <p class="zone">Umbria</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://meteosantamaria.altervista.org/hikvision/webcam_big.php" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://meteosantamaria.altervista.org/hikvision/webcam_big.php" loading="lazy" alt="Webcam Assisi" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Assisi</p>
+        <p class="zone">Umbria</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://www.montagnaitalia.it/webcam/original/cortina.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://www.montagnaitalia.it/webcam/original/cortina.jpg" loading="lazy" alt="Webcam Cortina" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Cortina</p>
+        <p class="zone">Veneto</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://webcam.bolzano-bozen.it/webcam-bolzano.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://webcam.bolzano-bozen.it/webcam-bolzano.jpg" loading="lazy" alt="Webcam Bolzano" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Bolzano</p>
+        <p class="zone">Trentino-Alto Adige</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="https://webcam.codima.info/mantova/mantova.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="https://webcam.codima.info/mantova/mantova.jpg" loading="lazy" alt="Webcam Mantova" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Mantova</p>
+        <p class="zone">Lombardia</p>
+      </div>
+    </div>
+
+    <div class="cam">
+      <a class="open" href="http://webcam.diocesipa.it/current.jpg" target="_blank" rel="noopener" title="Apri originale"><i class="ti ti-external-link" aria-hidden="true"></i></a>
+      <img src="http://webcam.diocesipa.it/current.jpg" loading="lazy" alt="Webcam Palermo Cattedrale" onerror="this.parentElement.classList.add('offline')">
+      <div class="body">
+        <p class="name">Palermo Cattedrale</p>
+        <p class="zone">Sicilia</p>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="section-title" id="offline-title" style="display:none;">Non disponibili</p>
+  <div class="grid" id="offline-grid"></div>
+
+  <footer>Weather Commander &middot; 53 webcam &middot; card gestite a mano nell'HTML</footer>
+</div>
+
+<div id="lightbox">
+  <img id="lightbox-img" src="" alt="">
+  <p class="caption" id="lightbox-caption"></p>
+</div>
+
+<script>
+  // Anteprima ingrandita: cliccando su una webcam si apre una versione
+  // grande dell'immagine (aggiornata). Si chiude cliccando di nuovo
+  // sull'overlay.
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightbox-img');
+  const lightboxCaption = document.getElementById('lightbox-caption');
+
+  document.querySelectorAll('.cam').forEach(card => {
+    const img = card.querySelector('img');
+    if (!img) return;
+
+    img.addEventListener('click', () => {
+      const name = card.querySelector('.name')?.textContent || '';
+      const zone = card.querySelector('.zone')?.textContent || '';
+      lightboxImg.src = img.src.split('?')[0] + '?_zoom=' + Date.now();
+      lightboxImg.alt = img.alt;
+      lightboxCaption.textContent = zone ? `${name} · ${zone}` : name;
+      lightbox.classList.add('show');
+    });
+  });
+
+  lightbox.addEventListener('click', () => lightbox.classList.remove('show'));
+</script>
+
+<script>
+  // Quando un'immagine fallisce, la card viene tolta dalla sua griglia
+  // e spostata nella sezione "Non disponibili" in fondo alla pagina.
+  document.querySelectorAll('.grid:not(#offline-grid) .cam img').forEach(img => {
+    img.addEventListener('error', function handler() {
+      img.removeEventListener('error', handler);
+      const card = img.closest('.cam');
+      card.classList.add('offline');
+      document.getElementById('offline-grid').appendChild(card);
+      document.getElementById('offline-title').style.display = 'block';
+    });
+  });
+</script>
+</body>
+</html>

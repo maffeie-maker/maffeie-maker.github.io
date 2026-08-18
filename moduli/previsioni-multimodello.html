@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Previsioni Multi-Modello</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    padding: 32px 16px 64px;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  .back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: #0071e3; text-decoration: none; margin-bottom: 18px; }
+  h1 { font-size: 13px; font-weight: 500; color: #6e6e73; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px; }
+  h2 { font-size: 26px; font-weight: 600; margin: 0 0 10px; letter-spacing: -0.02em; }
+  .subtitle { font-size: 14px; color: #6e6e73; margin: 0 0 24px; line-height: 1.5; max-width: 620px; }
+  .subtitle b { color: #1d1d1f; }
+
+  .models-note {
+    background: rgba(255,255,255,0.72); backdrop-filter: blur(20px);
+    border-radius: 14px; border: 0.5px solid rgba(0,0,0,0.06);
+    padding: 12px 16px; font-size: 12px; color: #6e6e73; margin-bottom: 24px; line-height: 1.6;
+  }
+  .models-note b { color: #1d1d1f; }
+
+  .legend { display: flex; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: #6e6e73; }
+  .legend .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .days { display: flex; flex-direction: column; gap: 8px; }
+  .day-row {
+    background: #fff; border-radius: 14px; border: 0.5px solid rgba(0,0,0,0.06);
+    padding: 12px 16px;
+  }
+  .day-row .top-line {
+    display: grid; grid-template-columns: 90px 1fr auto auto; gap: 14px; align-items: center;
+  }
+  .day-row .date { font-size: 13px; font-weight: 600; }
+  .day-row .date .dow { display: block; font-size: 11px; font-weight: 400; color: #86868b; text-transform: capitalize; }
+  .day-row .temps { font-size: 14px; }
+  .day-row .temps .max { font-weight: 600; }
+  .day-row .temps .min { color: #86868b; }
+  .day-row .rain { font-size: 12px; color: #0071e3; text-align: right; min-width: 60px; }
+  .day-row .agree {
+    width: 10px; height: 10px; border-radius: 50%; justify-self: end;
+  }
+  .day-row .extra {
+    display: flex; gap: 14px; margin: 8px 0 0 90px; padding-top: 8px;
+    border-top: 0.5px solid rgba(0,0,0,0.05); flex-wrap: wrap;
+  }
+  .day-row .extra span { font-size: 11px; color: #86868b; display: inline-flex; align-items: center; gap: 4px; }
+  .day-row .extra i { font-size: 13px; color: #a1a1a6; }
+  .agree-alta { background: #34c759; }
+  .agree-media { background: #ffcc00; }
+  .agree-bassa { background: #ff9500; }
+
+  .status { font-size: 13px; color: #86868b; padding: 20px 0; text-align: center; }
+  footer { text-align: center; font-size: 12px; color: #a1a1a6; margin-top: 40px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="../index.html"><i class="ti ti-chevron-left" aria-hidden="true"></i> Weather Commander</a>
+  <h1>Modulo</h1>
+  <h2>Previsioni Multi-Modello</h2>
+  <p class="subtitle">
+    Media di <b>6 modelli meteorologici indipendenti</b> (ECMWF, GFS, ICON, GEM, UKMO, Météo-France) per Correggio,
+    fino a 14 giorni, con millimetri di pioggia attesi, indice UV e umidità media. Il pallino a destra indica
+    quanto i modelli sono d'accordo tra loro: più sono concordi, più la previsione è affidabile.
+  </p>
+
+  <div class="models-note">
+    <b>Perché la media di più modelli</b><br>
+    Ogni servizio meteo (3bmeteo, IlMeteo, Windy...) di solito mostra l'output di un solo modello con qualche
+    correzione proprietaria. Qui invece vengono interrogati direttamente <b>6 centri meteorologici nazionali</b>
+    in parallelo, tramite Open-Meteo: più lontano nel tempo, più i modelli divergono tra loro &mdash; ed è proprio
+    quella divergenza a dirti quanto fidarti del dato. Oltre il 7&deg;-10&deg; giorno l'affidabilità cala per tutti,
+    non solo qui: trattalo come tendenza, non come previsione puntuale.
+  </div>
+
+  <div class="legend">
+    <span><span class="dot agree-alta"></span>Alta concordanza tra modelli</span>
+    <span><span class="dot agree-media"></span>Concordanza media</span>
+    <span><span class="dot agree-bassa"></span>Bassa concordanza (modelli in disaccordo)</span>
+  </div>
+
+  <div id="days" class="days">
+    <p class="status">Interrogazione dei 6 modelli in corso&hellip;</p>
+  </div>
+
+  <footer>Weather Commander &middot; dati Open-Meteo (ECMWF, NOAA GFS, DWD ICON, GEM, UKMO, M&eacute;t&eacute;o-France)</footer>
+</div>
+
+<script>
+  const LAT = 44.7756, LON = 10.7717;
+  const MODELS = ['ecmwf_ifs025', 'gfs_seamless', 'icon_seamless', 'gem_seamless', 'ukmo_seamless', 'meteofrance_seamless'];
+  const DOW = ['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato'];
+
+  function stdDev(arr) {
+    const mean = arr.reduce((a,b)=>a+b,0) / arr.length;
+    const variance = arr.reduce((a,b)=>a+(b-mean)**2,0) / arr.length;
+    return Math.sqrt(variance);
+  }
+
+  function agreementClass(spread) {
+    if (spread < 1.5) return 'agree-alta';
+    if (spread < 3.5) return 'agree-media';
+    return 'agree-bassa';
+  }
+
+  async function load() {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+      `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum` +
+      `&models=${MODELS.join(',')}&timezone=Europe%2FRome&forecast_days=14`;
+
+    let data;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('http ' + res.status);
+      data = await res.json();
+    } catch (e) {
+      document.getElementById('days').innerHTML = '<p class="status">Impossibile caricare i dati dei modelli in questo momento.</p>';
+      return;
+    }
+
+    // UV e umidità non sono calcolati come aggregato giornaliero da ogni singolo
+    // modello: li prendiamo dal modello combinato "best_match" di Open-Meteo.
+    let extraDaily = null;
+    try {
+      const extraUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+        `&daily=uv_index_max,relative_humidity_2m_mean&timezone=Europe%2FRome&forecast_days=14`;
+      const extraRes = await fetch(extraUrl);
+      if (extraRes.ok) {
+        const extraData = await extraRes.json();
+        extraDaily = extraData.daily;
+      }
+    } catch (e) { /* opzionale: se fallisce, semplicemente non mostriamo UV/umidità */ }
+
+    const daily = data.daily;
+    const dates = daily.time;
+    const rows = dates.map((dateStr, i) => {
+      const maxVals = [], minVals = [], rainProbVals = [], rainMmVals = [];
+      MODELS.forEach(m => {
+        const g = (key) => { const k = key + '_' + m; return (daily[k] && daily[k][i] != null) ? daily[k][i] : null; };
+        const mx = g('temperature_2m_max'); if (mx != null) maxVals.push(mx);
+        const mn = g('temperature_2m_min'); if (mn != null) minVals.push(mn);
+        const rp = g('precipitation_probability_max'); if (rp != null) rainProbVals.push(rp);
+        const rm = g('precipitation_sum'); if (rm != null) rainMmVals.push(rm);
+      });
+      if (maxVals.length === 0) return null;
+
+      const avg = (arr) => arr.length ? arr.reduce((a,b)=>a+b,0) / arr.length : null;
+      const avgMax = avg(maxVals);
+      const avgMin = avg(minVals);
+      const avgRainProb = avg(rainProbVals);
+      const avgRainMm = avg(rainMmVals);
+      const avgUv = extraDaily && extraDaily.uv_index_max ? extraDaily.uv_index_max[i] : null;
+      const avgHumid = extraDaily && extraDaily.relative_humidity_2m_mean ? extraDaily.relative_humidity_2m_mean[i] : null;
+      const spread = stdDev(maxVals);
+
+      const d = new Date(dateStr + 'T12:00:00');
+      const dowName = DOW[d.getDay()];
+      const dateLabel = d.getDate() + '/' + (d.getMonth()+1);
+
+      return `<div class="day-row">
+        <div class="top-line">
+          <div class="date"><span class="dow">${dowName}</span>${dateLabel}</div>
+          <div class="temps"><span class="max">${Math.round(avgMax)}&deg;</span> <span class="min">/ ${Math.round(avgMin)}&deg;</span></div>
+          <div class="rain">${avgRainProb != null ? Math.round(avgRainProb) + '% pioggia' : ''}</div>
+          <div class="agree ${agreementClass(spread)}" title="Scarto tra modelli: ${spread.toFixed(1)}°"></div>
+        </div>
+        <div class="extra">
+          ${avgRainMm != null ? `<span><i class="ti ti-droplet" aria-hidden="true"></i>${avgRainMm.toFixed(1)} mm</span>` : ''}
+          ${avgUv != null ? `<span><i class="ti ti-sun-high" aria-hidden="true"></i>UV ${avgUv.toFixed(1)}</span>` : ''}
+          ${avgHumid != null ? `<span><i class="ti ti-droplet-half-2" aria-hidden="true"></i>${Math.round(avgHumid)}% umidit&agrave;</span>` : ''}
+        </div>
+      </div>`;
+    }).filter(Boolean);
+
+    document.getElementById('days').innerHTML = rows.join('');
+  }
+
+  load();
+</script>
+</body>
+</html>

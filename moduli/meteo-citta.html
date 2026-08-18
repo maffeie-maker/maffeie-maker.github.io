@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meteo - Città a scelta</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    padding: 32px 16px 64px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  .back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: #0071e3; text-decoration: none; margin-bottom: 18px; }
+  h1 { font-size: 13px; font-weight: 500; color: #6e6e73; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px; }
+  h2 { font-size: 26px; font-weight: 600; margin: 0 0 18px; letter-spacing: -0.02em; }
+
+  .search-panel {
+    background: rgba(255,255,255,0.72); backdrop-filter: blur(20px);
+    border-radius: 16px; border: 0.5px solid rgba(0,0,0,0.06);
+    padding: 16px 18px; margin-bottom: 24px; position: relative;
+  }
+  .search-row { display: flex; gap: 8px; }
+  .search-row input {
+    flex: 1; font-family: inherit; font-size: 15px; padding: 10px 14px;
+    border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); background: #fff; outline: none;
+  }
+  .search-row input:focus { border-color: #0071e3; }
+  .search-row button {
+    font-family: inherit; font-size: 14px; font-weight: 500; color: #fff;
+    background: #0071e3; border: 0; border-radius: 10px; padding: 0 18px; cursor: pointer;
+  }
+  .search-row button:hover { background: #0064c8; }
+  #suggestions {
+    position: absolute; left: 18px; right: 18px; top: 62px;
+    background: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    border: 0.5px solid rgba(0,0,0,0.08); overflow: hidden; z-index: 10; display: none;
+  }
+  #suggestions .item { padding: 10px 14px; font-size: 14px; cursor: pointer; border-bottom: 0.5px solid rgba(0,0,0,0.05); }
+  #suggestions .item:last-child { border-bottom: none; }
+  #suggestions .item:hover { background: #f5f5f7; }
+  #suggestions .item .region { font-size: 12px; color: #86868b; }
+
+  .hero { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+  .hero .place { font-size: 20px; font-weight: 500; margin: 0 0 4px; }
+  .hero .temp { font-size: 56px; font-weight: 600; margin: 0; line-height: 1; letter-spacing: -0.02em; }
+  .hero .cond { font-size: 15px; color: #6e6e73; margin: 8px 0 0; }
+  .hero i#hero-icon { font-size: 60px; color: #86868b; }
+  .updated { font-size: 12px; color: #a1a1a6; margin: 6px 0 0; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 12px; margin-bottom: 28px; }
+  .card {
+    background: rgba(255,255,255,0.72); backdrop-filter: blur(20px);
+    border-radius: 18px; padding: 16px 18px; border: 0.5px solid rgba(0,0,0,0.06);
+  }
+  .card .label { font-size: 13px; color: #6e6e73; margin: 0 0 6px; }
+  .card .value { font-size: 22px; font-weight: 600; margin: 0; }
+
+  .section-title { font-size: 15px; font-weight: 600; margin: 0 0 14px; }
+  .radar-embed {
+    background: #fff; border-radius: 18px; border: 0.5px solid rgba(0,0,0,0.06);
+    overflow: hidden; margin-bottom: 8px;
+  }
+  .radar-embed iframe { width: 100%; height: 420px; border: 0; display: block; }
+  .radar-note { font-size: 12px; color: #86868b; margin: 0; }
+
+  .status { font-size: 13px; color: #86868b; padding: 10px 0; }
+  footer { text-align: center; font-size: 12px; color: #a1a1a6; margin-top: 40px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="../index.html"><i class="ti ti-chevron-left" aria-hidden="true"></i> Weather Commander</a>
+  <h1>Modulo</h1>
+  <h2>Meteo &middot; Città a scelta</h2>
+
+  <div class="search-panel">
+    <div class="search-row">
+      <input id="search-input" type="text" placeholder="Cerca una città (es. Milano, Napoli, Parigi...)" autocomplete="off">
+      <button onclick="searchCity()">Cerca</button>
+    </div>
+    <div id="suggestions"></div>
+  </div>
+
+  <div class="hero">
+    <div>
+      <p class="place" id="place-name">Correggio, Reggio Emilia</p>
+      <p class="temp" id="hero-temp">&hellip;</p>
+      <p class="cond" id="hero-cond">Caricamento dati live&hellip;</p>
+      <p class="updated">Aggiornato alle <span id="updated-time"></span></p>
+    </div>
+    <i class="ti ti-cloud" id="hero-icon" aria-hidden="true"></i>
+  </div>
+
+  <div class="grid">
+    <div class="card"><p class="label">Massima oggi</p><p class="value" id="stat-max">&hellip;</p></div>
+    <div class="card"><p class="label">Minima oggi</p><p class="value" id="stat-min">&hellip;</p></div>
+    <div class="card"><p class="label">Probabilit&agrave; pioggia</p><p class="value" id="stat-rain">&hellip;</p></div>
+    <div class="card"><p class="label">Vento</p><p class="value" id="stat-wind">&hellip;</p></div>
+  </div>
+
+  <p class="section-title">Radar precipitazioni live &middot; Windy</p>
+  <div class="radar-embed">
+    <iframe id="radar-iframe" src="" loading="lazy" title="Radar precipitazioni live"></iframe>
+  </div>
+  <p class="radar-note" style="margin-bottom: 24px;">Radar Windy ricentrato automaticamente sulla citt&agrave; scelta.</p>
+
+  <footer>Weather Commander &middot; dati Open-Meteo &middot; radar Windy</footer>
+</div>
+
+<script>
+  let LAT = 44.7756, LON = 10.7717;
+  let PLACE_NAME = 'Correggio, Reggio Emilia';
+
+  const WMO = {
+    0: ['ti-sun', 'Sereno'], 1: ['ti-sun', 'Prevalentemente sereno'], 2: ['ti-cloud', 'Parzialmente nuvoloso'],
+    3: ['ti-cloud', 'Nuvoloso'], 45: ['ti-cloud-fog', 'Nebbia'], 48: ['ti-cloud-fog', 'Nebbia con brina'],
+    51: ['ti-cloud-drizzle', 'Pioviggine debole'], 53: ['ti-cloud-drizzle', 'Pioviggine'], 55: ['ti-cloud-drizzle', 'Pioviggine intensa'],
+    61: ['ti-cloud-rain', 'Pioggia debole'], 63: ['ti-cloud-rain', 'Pioggia'], 65: ['ti-cloud-rain', 'Pioggia intensa'],
+    71: ['ti-snowflake', 'Neve debole'], 73: ['ti-snowflake', 'Neve'], 75: ['ti-snowflake', 'Neve intensa'],
+    80: ['ti-cloud-rain', 'Rovesci'], 81: ['ti-cloud-rain', 'Rovesci'], 82: ['ti-cloud-rain', 'Rovesci forti'],
+    95: ['ti-cloud-bolt', 'Temporale'], 96: ['ti-cloud-bolt', 'Temporale con grandine'], 99: ['ti-cloud-bolt', 'Temporale forte']
+  };
+  function wmoInfo(code) { return WMO[code] || ['ti-cloud', 'Variabile']; }
+
+  async function searchCity() {
+    const q = document.getElementById('search-input').value.trim();
+    if (!q) return;
+    const sugg = document.getElementById('suggestions');
+    sugg.innerHTML = '<div class="item">Ricerca in corso&hellip;</div>';
+    sugg.style.display = 'block';
+    try {
+      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=it&format=json`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const results = data.results || [];
+      if (results.length === 0) {
+        sugg.innerHTML = '<div class="item">Nessun risultato.</div>';
+        return;
+      }
+      sugg.innerHTML = results.map(r => {
+        const parts = [r.admin1, r.country].filter(Boolean).join(', ');
+        return `<div class="item" onclick='selectCity(${r.latitude}, ${r.longitude}, ${JSON.stringify(r.name)}, ${JSON.stringify(parts)})'>
+          <div>${r.name}</div><div class="region">${parts}</div>
+        </div>`;
+      }).join('');
+    } catch (e) {
+      sugg.innerHTML = '<div class="item">Ricerca non disponibile al momento.</div>';
+    }
+  }
+
+  function selectCity(lat, lon, name, region) {
+    LAT = lat; LON = lon;
+    PLACE_NAME = region ? `${name}, ${region}` : name;
+    document.getElementById('suggestions').style.display = 'none';
+    document.getElementById('search-input').value = '';
+    document.getElementById('place-name').textContent = PLACE_NAME;
+    loadWeather();
+    loadRadar();
+  }
+
+  document.getElementById('search-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchCity();
+  });
+
+  function loadRadar() {
+    const src = `https://embed.windy.com/embed2.html?lat=${LAT}&lon=${LON}&zoom=8&level=surface&overlay=radar&menu=&message=&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=${LAT}&detailLon=${LON}&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
+    document.getElementById('radar-iframe').src = src;
+  }
+
+  async function loadWeather() {
+    document.getElementById('hero-cond').textContent = 'Caricamento dati live…';
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+        `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m` +
+        `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
+        `&timezone=auto&forecast_days=1`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('http ' + res.status);
+      const d = await res.json();
+      const [icon, text] = wmoInfo(d.current.weather_code);
+      document.getElementById('hero-temp').textContent = Math.round(d.current.temperature_2m) + '°';
+      document.getElementById('hero-cond').textContent =
+        text + ' · percepita ' + Math.round(d.current.apparent_temperature) + '°';
+      document.getElementById('hero-icon').className = 'ti ' + icon;
+      document.getElementById('stat-max').textContent = Math.round(d.daily.temperature_2m_max[0]) + '°';
+      document.getElementById('stat-min').textContent = Math.round(d.daily.temperature_2m_min[0]) + '°';
+      document.getElementById('stat-rain').textContent = Math.round(d.daily.precipitation_probability_max[0]) + '%';
+      document.getElementById('stat-wind').textContent = Math.round(d.current.wind_speed_10m) + ' km/h';
+      document.getElementById('updated-time').textContent =
+        new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      document.getElementById('hero-cond').textContent = 'Dati live non disponibili al momento';
+    }
+  }
+
+  loadWeather();
+  loadRadar();
+  setTimeout(() => location.reload(), 20 * 60 * 1000);
+</script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weather Commander</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    padding: 40px 16px 64px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  header { margin-bottom: 36px; }
+  header .eyebrow { font-size: 13px; font-weight: 500; color: #6e6e73; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px; }
+  header h1 { font-size: 30px; font-weight: 600; margin: 0; letter-spacing: -0.02em; }
+  header p { font-size: 15px; color: #6e6e73; margin: 8px 0 0; }
+
+  .modules {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .module {
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(20px);
+    border-radius: 18px;
+    border: 0.5px solid rgba(0,0,0,0.06);
+    padding: 20px 20px 18px;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .module:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
+  .module.disabled { opacity: 0.5; pointer-events: none; }
+  .module .icon-wrap {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: #0071e3; display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px;
+  }
+  .module .icon-wrap i { font-size: 22px; color: #fff; }
+  .module.disabled .icon-wrap { background: #c7c7cc; }
+  .module .name { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+  .module .desc { font-size: 13px; color: #6e6e73; margin: 0 0 12px; line-height: 1.45; }
+  .module .status {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 500; color: #248a3d;
+  }
+  .module .status .dot { width: 7px; height: 7px; border-radius: 50%; background: #34c759; }
+  .module.disabled .status { color: #86868b; }
+  .module.disabled .status .dot { background: #c7c7cc; }
+
+  footer { text-align: center; font-size: 12px; color: #a1a1a6; margin-top: 40px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Weather Commander</p>
+    <h1>Centro meteo Emilia-Romagna</h1>
+    <p>Suite locale di moduli meteo &mdash; condizioni live, radar e allerte ufficiali in un unico posto.</p>
+  </header>
+
+  <div class="modules">
+
+    <a class="module" href="moduli/meteo-emilia-romagna.html">
+      <div class="icon-wrap"><i class="ti ti-cloud" aria-hidden="true"></i></div>
+      <p class="name">Meteo Emilia-Romagna</p>
+      <p class="desc">Condizioni live a Correggio, temperature nelle principali citt&agrave;, radar precipitazioni e stato allerta ufficiale Protezione Civile.</p>
+      <span class="status"><span class="dot"></span>Attivo</span>
+    </a>
+
+    <a class="module" href="moduli/webcam-emilia-romagna.html">
+      <div class="icon-wrap"><i class="ti ti-camera" aria-hidden="true"></i></div>
+      <p class="name">Webcam regionali</p>
+      <p class="desc">Le tue webcam preferite dell'Emilia-Romagna, in card definite direttamente nell'HTML del modulo.</p>
+      <span class="status"><span class="dot"></span>Attivo</span>
+    </a>
+
+    <a class="module" href="moduli/previsioni-multimodello.html">
+      <div class="icon-wrap"><i class="ti ti-chart-line" aria-hidden="true"></i></div>
+      <p class="name">Previsioni Multi-Modello</p>
+      <p class="desc">Media di 6 modelli meteorologici indipendenti fino a 14 giorni, con indicatore di concordanza.</p>
+      <span class="status"><span class="dot"></span>Attivo</span>
+    </a>
+
+    <a class="module" href="moduli/previsioni-multimodello-citta.html">
+      <div class="icon-wrap"><i class="ti ti-map-pin-search" aria-hidden="true"></i></div>
+      <p class="name">Previsioni Multi-Modello &middot; Citt&agrave; a scelta</p>
+      <p class="desc">Stessa media di 6 modelli fino a 14 giorni, ma cercando una citt&agrave; qualsiasi.</p>
+      <span class="status"><span class="dot"></span>Attivo</span>
+    </a>
+
+    <a class="module" href="moduli/meteo-citta.html">
+      <div class="icon-wrap"><i class="ti ti-map-pin" aria-hidden="true"></i></div>
+      <p class="name">Meteo &middot; Citt&agrave; a scelta</p>
+      <p class="desc">Condizioni attuali e radar live per qualsiasi citt&agrave;, non solo Correggio.</p>
+      <span class="status"><span class="dot"></span>Attivo</span>
+    </a>
+
+    <div class="module disabled">
+      <div class="icon-wrap"><i class="ti ti-thermometer" aria-hidden="true"></i></div>
+      <p class="name">Rete stazioni</p>
+      <p class="desc">Temperature live dalla rete di stazioni meteo private.</p>
+      <span class="status"><span class="dot"></span>In arrivo</span>
+    </div>
+
+    <div class="module disabled">
+      <div class="icon-wrap"><i class="ti ti-bell" aria-hidden="true"></i></div>
+      <p class="name">Notifiche allerta</p>
+      <p class="desc">Avviso quando cambia il colore del bollettino Arpae.</p>
+      <span class="status"><span class="dot"></span>In arrivo</span>
+    </div>
+
+  </div>
+
+  <footer>Weather Commander &middot; dati Open-Meteo, Windy, Arpae &ndash; Protezione Civile Emilia-Romagna</footer>
+</div>
+</body>
+</html>

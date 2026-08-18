@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meteo Emilia-Romagna</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    padding: 32px 16px 64px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  .back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: #0071e3; text-decoration: none; margin-bottom: 18px; }
+  h1 { font-size: 13px; font-weight: 500; color: #6e6e73; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 8px; }
+  .hero {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 28px;
+  }
+  .hero .place { font-size: 20px; font-weight: 500; margin: 0 0 4px; }
+  .hero .temp { font-size: 56px; font-weight: 600; margin: 0; line-height: 1; letter-spacing: -0.02em; }
+  .hero .cond { font-size: 15px; color: #6e6e73; margin: 8px 0 0; }
+  .hero i { font-size: 60px; color: #86868b; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 12px; margin-bottom: 28px; }
+  .card {
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(20px);
+    border-radius: 18px;
+    padding: 16px 18px;
+    border: 0.5px solid rgba(0,0,0,0.06);
+  }
+  .card .label { font-size: 13px; color: #6e6e73; margin: 0 0 6px; }
+  .card .value { font-size: 22px; font-weight: 600; margin: 0; }
+  .cities { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 32px; }
+  .city { background: #fff; border-radius: 14px; padding: 14px 16px; border: 0.5px solid rgba(0,0,0,0.06); }
+  .city .name { font-size: 13px; color: #6e6e73; margin: 0 0 6px; }
+  .city .row { display: flex; align-items: center; gap: 6px; }
+  .city .row i { font-size: 18px; color: #86868b; }
+  .city .row span { font-size: 19px; font-weight: 600; }
+  .section-title { font-size: 15px; font-weight: 600; margin: 0 0 14px; }
+  .radar-embed {
+    background: #fff;
+    border-radius: 18px;
+    border: 0.5px solid rgba(0,0,0,0.06);
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .radar-embed iframe { width: 100%; height: 480px; border: 0; display: block; }
+  .radar-note { font-size: 12px; color: #86868b; margin: 0 0 32px; }
+  .radar-note a { color: #0071e3; text-decoration: none; }
+  .allerta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 8px; margin-bottom: 32px; }
+  .allerta-chip {
+    background: #fff; border-radius: 12px; padding: 10px 12px;
+    border: 0.5px solid rgba(0,0,0,0.06); font-size: 12px;
+  }
+  .allerta-chip .fen { color: #6e6e73; margin: 0 0 6px; text-transform: capitalize; }
+  .allerta-chip .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
+  .allerta-chip .stato { font-weight: 600; text-transform: capitalize; }
+  .dot-green { background: #34c759; } .stato-green { color: #248a3d; }
+  .dot-yellow { background: #ffcc00; } .stato-yellow { color: #a37a00; }
+  .dot-orange { background: #ff9500; } .stato-orange { color: #b96400; }
+  .dot-red { background: #ff3b30; } .stato-red { color: #d70015; }
+  .allerta-meta { font-size: 12px; color: #86868b; margin: -20px 0 32px; }
+  footer { text-align: center; font-size: 12px; color: #a1a1a6; margin-top: 32px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back" href="../index.html"><i class="ti ti-chevron-left" aria-hidden="true"></i> Weather Commander</a>
+  <h1>Correggio, Reggio Emilia</h1>
+  <div class="hero">
+    <div>
+      <p class="place">Adesso a Correggio</p>
+      <p class="temp" id="hero-temp">&hellip;</p>
+      <p class="cond" id="hero-cond">Caricamento dati live&hellip;</p>
+      <p style="font-size:12px; color:#a1a1a6; margin:6px 0 0;">Aggiornato alle <span id="updated-time"></span> &middot; si aggiorna da solo ogni 20 minuti</p>
+    </div>
+    <i class="ti ti-cloud" id="hero-icon" aria-hidden="true"></i>
+  </div>
+
+  <div class="grid">
+    <div class="card"><p class="label">Massima oggi</p><p class="value" id="stat-max">&hellip;</p></div>
+    <div class="card"><p class="label">Minima oggi</p><p class="value" id="stat-min">&hellip;</p></div>
+    <div class="card"><p class="label">Probabilità pioggia</p><p class="value" id="stat-rain">&hellip;</p></div>
+    <div class="card"><p class="label">Vento</p><p class="value" id="stat-wind">&hellip;</p></div>
+  </div>
+
+  <p class="section-title">Città della regione</p>
+  <div class="cities">
+    <div class="city"><p class="name">Parma</p><div class="row"><i class="ti ti-cloud" id="icon-parma" aria-hidden="true"></i><span id="temp-parma">&hellip;</span></div></div>
+    <div class="city"><p class="name">Bologna</p><div class="row"><i class="ti ti-cloud" id="icon-bologna" aria-hidden="true"></i><span id="temp-bologna">&hellip;</span></div></div>
+    <div class="city"><p class="name">Ravenna</p><div class="row"><i class="ti ti-cloud" id="icon-ravenna" aria-hidden="true"></i><span id="temp-ravenna">&hellip;</span></div></div>
+    <div class="city"><p class="name">Rimini</p><div class="row"><i class="ti ti-cloud" id="icon-rimini" aria-hidden="true"></i><span id="temp-rimini">&hellip;</span></div></div>
+  </div>
+
+  <p class="section-title">Radar precipitazioni live &middot; Windy</p>
+  <div class="radar-embed">
+    <iframe
+      src="https://embed.windy.com/embed2.html?lat=44.727&lon=11&zoom=7&level=surface&overlay=radar&menu=&message=&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=44.727&detailLon=11&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1"
+      loading="lazy"
+      title="Radar precipitazioni live Emilia-Romagna, Windy">
+    </iframe>
+  </div>
+  <p class="radar-note">
+    Radar Windy centrato sull'Emilia-Romagna &middot; per l'evoluzione ufficiale a +1h/+2h/+3h con dati Arpae,
+    <a href="https://allertameteo.regione.emilia-romagna.it/nowcasting-evoluzione-degli-echi-radar" target="_blank" rel="noopener">apri il nowcasting Arpae</a>.
+  </p>
+
+  <p class="section-title">Stato allerta ufficiale &middot; Protezione Civile ER</p>
+  <div id="allerta-wrap">
+    <p style="font-size:13px; color:#86868b;">Caricamento stato allerta...</p>
+  </div>
+
+  <footer>Meteo generale: dati previsionali &middot; Radar e allerte: Arpae &ndash; Servizio Idro-Meteo-Clima</footer>
+
+  <script>
+    fetch('https://allertameteo.regione.emilia-romagna.it/o/get-stato-allerta')
+      .then(r => r.json())
+      .then(data => {
+        const zonaKey = Object.keys(data).find(k => /^[A-Z][0-9]$/.test(k)) || 'G1';
+        const zona = data[zonaKey] || {};
+        const labels = {
+          temporali: 'Temporali', idraulica: 'Idraulica', idrogeologica: 'Idrogeologica',
+          vento: 'Vento', neve: 'Neve', temperature_estreme: 'Temperature estreme',
+          ghiaccio_pioggia_gela: 'Ghiaccio', mareggiate: 'Mareggiate', stato_mare: 'Stato mare'
+        };
+        let html = '<div class="allerta-grid">';
+        let any = false;
+        for (const key in labels) {
+          const stato = zona[key];
+          if (!stato) continue;
+          any = true;
+          html += '<div class="allerta-chip"><p class="fen">' + labels[key] + '</p>' +
+                  '<p class="stato stato-' + stato + '"><span class="dot dot-' + stato + '"></span>' + stato + '</p></div>';
+        }
+        html += '</div>';
+        if (!any) throw new Error('empty');
+        document.getElementById('allerta-wrap').innerHTML = html +
+          '<p class="allerta-meta">' + (data.titolo || 'Bollettino Protezione Civile Emilia-Romagna') + '</p>';
+      })
+      .catch(() => {
+        document.getElementById('allerta-wrap').innerHTML =
+          '<div class="radar-card" style="padding:20px;"><p style="margin:0;">Non riesco a leggere il webservice da qui (probabile blocco CORS lato server). ' +
+          '<a href="https://allertameteo.regione.emilia-romagna.it/o/get-stato-allerta" target="_blank" rel="noopener" style="color:#0071e3;">Apri il JSON direttamente</a>.</p></div>';
+      });
+  </script>
+  <script>
+    const WMO = {
+      0: ['ti-sun', 'Sereno'], 1: ['ti-sun', 'Prevalentemente sereno'], 2: ['ti-cloud', 'Parzialmente nuvoloso'],
+      3: ['ti-cloud', 'Nuvoloso'], 45: ['ti-cloud-fog', 'Nebbia'], 48: ['ti-cloud-fog', 'Nebbia con brina'],
+      51: ['ti-cloud-drizzle', 'Pioviggine debole'], 53: ['ti-cloud-drizzle', 'Pioviggine'], 55: ['ti-cloud-drizzle', 'Pioviggine intensa'],
+      61: ['ti-cloud-rain', 'Pioggia debole'], 63: ['ti-cloud-rain', 'Pioggia'], 65: ['ti-cloud-rain', 'Pioggia intensa'],
+      71: ['ti-snowflake', 'Neve debole'], 73: ['ti-snowflake', 'Neve'], 75: ['ti-snowflake', 'Neve intensa'],
+      80: ['ti-cloud-rain', 'Rovesci'], 81: ['ti-cloud-rain', 'Rovesci'], 82: ['ti-cloud-rain', 'Rovesci forti'],
+      95: ['ti-cloud-bolt', 'Temporale'], 96: ['ti-cloud-bolt', 'Temporale con grandine'], 99: ['ti-cloud-bolt', 'Temporale forte']
+    };
+    function wmoInfo(code) { return WMO[code] || ['ti-cloud', 'Variabile']; }
+
+    async function fetchWeather(lat, lon, opts = {}) {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+        `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m` +
+        `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
+        `&timezone=Europe%2FRome&forecast_days=1`;
+      const r = await fetch(url);
+      if (!r.ok) throw new Error('http ' + r.status);
+      return r.json();
+    }
+
+    async function loadCorreggio() {
+      try {
+        const d = await fetchWeather(44.7756, 10.7717);
+        const [icon, text] = wmoInfo(d.current.weather_code);
+        document.getElementById('hero-temp').textContent = Math.round(d.current.temperature_2m) + '°';
+        document.getElementById('hero-cond').textContent =
+          text + ' · percepita ' + Math.round(d.current.apparent_temperature) + '°';
+        document.getElementById('hero-icon').className = 'ti ' + icon;
+        document.getElementById('stat-max').textContent = Math.round(d.daily.temperature_2m_max[0]) + '°';
+        document.getElementById('stat-min').textContent = Math.round(d.daily.temperature_2m_min[0]) + '°';
+        document.getElementById('stat-rain').textContent = Math.round(d.daily.precipitation_probability_max[0]) + '%';
+        document.getElementById('stat-wind').textContent = Math.round(d.current.wind_speed_10m) + ' km/h';
+      } catch (e) {
+        document.getElementById('hero-cond').textContent = 'Dati live non disponibili al momento';
+      }
+    }
+
+    async function loadCity(id, lat, lon) {
+      try {
+        const d = await fetchWeather(lat, lon);
+        const [icon] = wmoInfo(d.current.weather_code);
+        document.getElementById('temp-' + id).textContent = Math.round(d.current.temperature_2m) + '°';
+        document.getElementById('icon-' + id).className = 'ti ' + icon;
+      } catch (e) {
+        document.getElementById('temp-' + id).textContent = '--°';
+      }
+    }
+
+    loadCorreggio();
+    loadCity('parma', 44.8015, 10.3279);
+    loadCity('bologna', 44.4949, 11.3426);
+    loadCity('ravenna', 44.4184, 12.2035);
+    loadCity('rimini', 44.0678, 12.5695);
+
+    document.getElementById('updated-time').textContent =
+      new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+    setTimeout(() => location.reload(), 20 * 60 * 1000);
+  </script>
+</div>
+</body>
+</html>
