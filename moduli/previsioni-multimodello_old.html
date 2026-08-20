@@ -59,28 +59,6 @@
   .agree-media { background: #ffcc00; }
   .agree-bassa { background: #ff9500; }
 
-  .hourly-section { margin-bottom: 28px; }
-  .hourly-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
-  .hourly-tabs button {
-    font-family: inherit; font-size: 13px; font-weight: 500; color: #6e6e73;
-    background: #fff; border: 0.5px solid rgba(0,0,0,0.08); border-radius: 10px;
-    padding: 8px 14px; cursor: pointer;
-  }
-  .hourly-tabs button.active { background: #0071e3; color: #fff; border-color: #0071e3; }
-  .hourly-strip {
-    display: flex; gap: 2px; overflow-x: auto; background: #fff;
-    border-radius: 16px; border: 0.5px solid rgba(0,0,0,0.06); padding: 16px 12px;
-  }
-  .hour-col {
-    flex: 0 0 auto; width: 56px; text-align: center; display: flex;
-    flex-direction: column; align-items: center; gap: 6px;
-  }
-  .hour-col .h-time { font-size: 11px; color: #86868b; }
-  .hour-col .h-icon { font-size: 18px; color: #6e6e73; }
-  .hour-col .h-temp { font-size: 13px; font-weight: 600; }
-  .hour-col .h-rain { font-size: 10px; color: #0071e3; }
-  .hour-col .h-rain.zero { color: #c7c7cc; }
-
   .status { font-size: 13px; color: #86868b; padding: 20px 0; text-align: center; }
   footer { text-align: center; font-size: 12px; color: #a1a1a6; margin-top: 40px; }
 </style>
@@ -112,14 +90,6 @@
     <span><span class="dot agree-bassa"></span>Bassa concordanza (modelli in disaccordo)</span>
   </div>
 
-  <p class="section-title" style="font-size:15px;font-weight:600;margin:0 0 14px;">Dettaglio orario &middot; prossimi 3 giorni</p>
-  <div class="hourly-section">
-    <div class="hourly-tabs" id="hourly-tabs"></div>
-    <div class="hourly-strip" id="hourly-strip">
-      <p class="status">Caricamento dettaglio orario&hellip;</p>
-    </div>
-  </div>
-
   <div id="days" class="days">
     <p class="status">Interrogazione dei 6 modelli in corso&hellip;</p>
   </div>
@@ -128,81 +98,6 @@
 </div>
 
 <script>
-  const WMO = {
-    0: ['ti-sun'], 1: ['ti-sun'], 2: ['ti-cloud'], 3: ['ti-cloud'],
-    45: ['ti-cloud-fog'], 48: ['ti-cloud-fog'],
-    51: ['ti-cloud-drizzle'], 53: ['ti-cloud-drizzle'], 55: ['ti-cloud-drizzle'],
-    61: ['ti-cloud-rain'], 63: ['ti-cloud-rain'], 65: ['ti-cloud-rain'],
-    71: ['ti-snowflake'], 73: ['ti-snowflake'], 75: ['ti-snowflake'],
-    80: ['ti-cloud-rain'], 81: ['ti-cloud-rain'], 82: ['ti-cloud-rain'],
-    95: ['ti-cloud-bolt'], 96: ['ti-cloud-bolt'], 99: ['ti-cloud-bolt']
-  };
-  function wmoInfo(code) { return WMO[code] || ['ti-cloud']; }
-
-  const DOW_SHORT = ['dom','lun','mar','mer','gio','ven','sab'];
-  let hourlyData = null;
-  let hourlyDayIndex = 0;
-
-  async function loadHourly() {
-    document.getElementById('hourly-strip').innerHTML = '<p class="status">Caricamento dettaglio orario&hellip;</p>';
-    try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
-        `&hourly=temperature_2m,precipitation_probability,weather_code` +
-        `&timezone=Europe%2FRome&forecast_days=3`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('http ' + res.status);
-      hourlyData = await res.json();
-      buildHourlyTabs();
-      renderHourlyDay(0);
-    } catch (e) {
-      document.getElementById('hourly-strip').innerHTML = '<p class="status">Dettaglio orario non disponibile al momento.</p>';
-    }
-  }
-
-  function buildHourlyTabs() {
-    const times = hourlyData.hourly.time;
-    const dayLabels = [];
-    const seenDates = [];
-    times.forEach(t => {
-      const dateOnly = t.slice(0, 10);
-      if (!seenDates.includes(dateOnly)) seenDates.push(dateOnly);
-    });
-    const labels = ['Oggi', 'Domani', 'Dopodomani'];
-    const tabsHtml = seenDates.slice(0, 3).map((dateStr, i) => {
-      const d = new Date(dateStr + 'T12:00:00');
-      const label = labels[i] || (DOW_SHORT[d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1));
-      return `<button class="${i === 0 ? 'active' : ''}" data-day="${i}" onclick="renderHourlyDay(${i})">${label}</button>`;
-    }).join('');
-    document.getElementById('hourly-tabs').innerHTML = tabsHtml;
-  }
-
-  function renderHourlyDay(dayIndex) {
-    hourlyDayIndex = dayIndex;
-    document.querySelectorAll('#hourly-tabs button').forEach(b => {
-      b.classList.toggle('active', parseInt(b.dataset.day) === dayIndex);
-    });
-    const times = hourlyData.hourly.time;
-    const temps = hourlyData.hourly.temperature_2m;
-    const rains = hourlyData.hourly.precipitation_probability;
-    const codes = hourlyData.hourly.weather_code;
-
-    const startIdx = dayIndex * 24;
-    const endIdx = startIdx + 24;
-    const cols = [];
-    for (let i = startIdx; i < endIdx && i < times.length; i++) {
-      const hh = times[i].slice(11, 16);
-      const [icon] = wmoInfo(codes[i]);
-      const rain = rains[i];
-      cols.push(`<div class="hour-col">
-        <span class="h-time">${hh}</span>
-        <i class="ti ${icon} h-icon" aria-hidden="true"></i>
-        <span class="h-temp">${Math.round(temps[i])}&deg;</span>
-        <span class="h-rain ${rain === 0 ? 'zero' : ''}">${rain}%</span>
-      </div>`);
-    }
-    document.getElementById('hourly-strip').innerHTML = cols.join('');
-  }
-
   const LAT = 44.7756, LON = 10.7717;
   const MODELS = ['ecmwf_ifs025', 'gfs_seamless', 'icon_seamless', 'gem_seamless', 'ukmo_seamless', 'meteofrance_seamless'];
   const DOW = ['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato'];
@@ -292,7 +187,6 @@
   }
 
   load();
-  loadHourly();
 </script>
 </body>
 </html>

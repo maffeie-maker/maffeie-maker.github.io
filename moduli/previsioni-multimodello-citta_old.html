@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Previsioni Multi-Modello</title>
+<title>Previsioni Multi-Modello - Città a scelta</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
 <style>
   * { box-sizing: border-box; }
@@ -18,15 +18,36 @@
   .back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: #0071e3; text-decoration: none; margin-bottom: 18px; }
   h1 { font-size: 13px; font-weight: 500; color: #6e6e73; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px; }
   h2 { font-size: 26px; font-weight: 600; margin: 0 0 10px; letter-spacing: -0.02em; }
-  .subtitle { font-size: 14px; color: #6e6e73; margin: 0 0 24px; line-height: 1.5; max-width: 620px; }
+  .subtitle { font-size: 14px; color: #6e6e73; margin: 0 0 20px; line-height: 1.5; max-width: 620px; }
   .subtitle b { color: #1d1d1f; }
 
-  .models-note {
+  .search-panel {
     background: rgba(255,255,255,0.72); backdrop-filter: blur(20px);
-    border-radius: 14px; border: 0.5px solid rgba(0,0,0,0.06);
-    padding: 12px 16px; font-size: 12px; color: #6e6e73; margin-bottom: 24px; line-height: 1.6;
+    border-radius: 16px; border: 0.5px solid rgba(0,0,0,0.06);
+    padding: 16px 18px; margin-bottom: 20px; position: relative;
   }
-  .models-note b { color: #1d1d1f; }
+  .search-row { display: flex; gap: 8px; }
+  .search-row input {
+    flex: 1; font-family: inherit; font-size: 15px; padding: 10px 14px;
+    border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); background: #fff; outline: none;
+  }
+  .search-row input:focus { border-color: #0071e3; }
+  .search-row button {
+    font-family: inherit; font-size: 14px; font-weight: 500; color: #fff;
+    background: #0071e3; border: 0; border-radius: 10px; padding: 0 18px; cursor: pointer;
+  }
+  .search-row button:hover { background: #0064c8; }
+  #suggestions {
+    position: absolute; left: 18px; right: 18px; top: 62px;
+    background: #fff; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    border: 0.5px solid rgba(0,0,0,0.08); overflow: hidden; z-index: 10; display: none;
+  }
+  #suggestions .item { padding: 10px 14px; font-size: 14px; cursor: pointer; border-bottom: 0.5px solid rgba(0,0,0,0.05); }
+  #suggestions .item:last-child { border-bottom: none; }
+  #suggestions .item:hover { background: #f5f5f7; }
+  #suggestions .item .region { font-size: 12px; color: #86868b; }
+  .current-place { font-size: 13px; color: #6e6e73; margin: 10px 0 0; }
+  .current-place b { color: #1d1d1f; }
 
   .legend { display: flex; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
   .legend span { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: #6e6e73; }
@@ -46,9 +67,7 @@
   .day-row .temps .max { font-weight: 600; }
   .day-row .temps .min { color: #86868b; }
   .day-row .rain { font-size: 12px; color: #0071e3; text-align: right; min-width: 60px; }
-  .day-row .agree {
-    width: 10px; height: 10px; border-radius: 50%; justify-self: end;
-  }
+  .day-row .agree { width: 10px; height: 10px; border-radius: 50%; justify-self: end; }
   .day-row .extra {
     display: flex; gap: 14px; margin: 8px 0 0 90px; padding-top: 8px;
     border-top: 0.5px solid rgba(0,0,0,0.05); flex-wrap: wrap;
@@ -59,28 +78,6 @@
   .agree-media { background: #ffcc00; }
   .agree-bassa { background: #ff9500; }
 
-  .hourly-section { margin-bottom: 28px; }
-  .hourly-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
-  .hourly-tabs button {
-    font-family: inherit; font-size: 13px; font-weight: 500; color: #6e6e73;
-    background: #fff; border: 0.5px solid rgba(0,0,0,0.08); border-radius: 10px;
-    padding: 8px 14px; cursor: pointer;
-  }
-  .hourly-tabs button.active { background: #0071e3; color: #fff; border-color: #0071e3; }
-  .hourly-strip {
-    display: flex; gap: 2px; overflow-x: auto; background: #fff;
-    border-radius: 16px; border: 0.5px solid rgba(0,0,0,0.06); padding: 16px 12px;
-  }
-  .hour-col {
-    flex: 0 0 auto; width: 56px; text-align: center; display: flex;
-    flex-direction: column; align-items: center; gap: 6px;
-  }
-  .hour-col .h-time { font-size: 11px; color: #86868b; }
-  .hour-col .h-icon { font-size: 18px; color: #6e6e73; }
-  .hour-col .h-temp { font-size: 13px; font-weight: 600; }
-  .hour-col .h-rain { font-size: 10px; color: #0071e3; }
-  .hour-col .h-rain.zero { color: #c7c7cc; }
-
   .status { font-size: 13px; color: #86868b; padding: 20px 0; text-align: center; }
   footer { text-align: center; font-size: 12px; color: #a1a1a6; margin-top: 40px; }
 </style>
@@ -90,34 +87,25 @@
 
   <a class="back" href="../index.html"><i class="ti ti-chevron-left" aria-hidden="true"></i> Weather Commander</a>
   <h1>Modulo</h1>
-  <h2>Previsioni Multi-Modello</h2>
+  <h2>Previsioni Multi-Modello &middot; Città a scelta</h2>
   <p class="subtitle">
-    Media di <b>6 modelli meteorologici indipendenti</b> (ECMWF, GFS, ICON, GEM, UKMO, Météo-France) per Correggio,
-    fino a 14 giorni, con millimetri di pioggia attesi, indice UV e umidità media. Il pallino a destra indica
-    quanto i modelli sono d'accordo tra loro: più sono concordi, più la previsione è affidabile.
+    Stessa logica del modulo Previsioni Multi-Modello, ma su qualsiasi città: media di
+    <b>6 modelli meteorologici indipendenti</b> fino a 14 giorni, con indicatore di quanto sono d'accordo tra loro.
   </p>
 
-  <div class="models-note">
-    <b>Perché la media di più modelli</b><br>
-    Ogni servizio meteo (3bmeteo, IlMeteo, Windy...) di solito mostra l'output di un solo modello con qualche
-    correzione proprietaria. Qui invece vengono interrogati direttamente <b>6 centri meteorologici nazionali</b>
-    in parallelo, tramite Open-Meteo: più lontano nel tempo, più i modelli divergono tra loro &mdash; ed è proprio
-    quella divergenza a dirti quanto fidarti del dato. Oltre il 7&deg;-10&deg; giorno l'affidabilità cala per tutti,
-    non solo qui: trattalo come tendenza, non come previsione puntuale.
+  <div class="search-panel">
+    <div class="search-row">
+      <input id="search-input" type="text" placeholder="Cerca una città (es. Milano, Napoli, Parigi...)" autocomplete="off">
+      <button onclick="searchCity()">Cerca</button>
+    </div>
+    <div id="suggestions"></div>
+    <p class="current-place" id="current-place">Città attuale: <b>Correggio, Reggio Emilia, Italia</b></p>
   </div>
 
   <div class="legend">
     <span><span class="dot agree-alta"></span>Alta concordanza tra modelli</span>
     <span><span class="dot agree-media"></span>Concordanza media</span>
     <span><span class="dot agree-bassa"></span>Bassa concordanza (modelli in disaccordo)</span>
-  </div>
-
-  <p class="section-title" style="font-size:15px;font-weight:600;margin:0 0 14px;">Dettaglio orario &middot; prossimi 3 giorni</p>
-  <div class="hourly-section">
-    <div class="hourly-tabs" id="hourly-tabs"></div>
-    <div class="hourly-strip" id="hourly-strip">
-      <p class="status">Caricamento dettaglio orario&hellip;</p>
-    </div>
   </div>
 
   <div id="days" class="days">
@@ -128,82 +116,7 @@
 </div>
 
 <script>
-  const WMO = {
-    0: ['ti-sun'], 1: ['ti-sun'], 2: ['ti-cloud'], 3: ['ti-cloud'],
-    45: ['ti-cloud-fog'], 48: ['ti-cloud-fog'],
-    51: ['ti-cloud-drizzle'], 53: ['ti-cloud-drizzle'], 55: ['ti-cloud-drizzle'],
-    61: ['ti-cloud-rain'], 63: ['ti-cloud-rain'], 65: ['ti-cloud-rain'],
-    71: ['ti-snowflake'], 73: ['ti-snowflake'], 75: ['ti-snowflake'],
-    80: ['ti-cloud-rain'], 81: ['ti-cloud-rain'], 82: ['ti-cloud-rain'],
-    95: ['ti-cloud-bolt'], 96: ['ti-cloud-bolt'], 99: ['ti-cloud-bolt']
-  };
-  function wmoInfo(code) { return WMO[code] || ['ti-cloud']; }
-
-  const DOW_SHORT = ['dom','lun','mar','mer','gio','ven','sab'];
-  let hourlyData = null;
-  let hourlyDayIndex = 0;
-
-  async function loadHourly() {
-    document.getElementById('hourly-strip').innerHTML = '<p class="status">Caricamento dettaglio orario&hellip;</p>';
-    try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
-        `&hourly=temperature_2m,precipitation_probability,weather_code` +
-        `&timezone=Europe%2FRome&forecast_days=3`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('http ' + res.status);
-      hourlyData = await res.json();
-      buildHourlyTabs();
-      renderHourlyDay(0);
-    } catch (e) {
-      document.getElementById('hourly-strip').innerHTML = '<p class="status">Dettaglio orario non disponibile al momento.</p>';
-    }
-  }
-
-  function buildHourlyTabs() {
-    const times = hourlyData.hourly.time;
-    const dayLabels = [];
-    const seenDates = [];
-    times.forEach(t => {
-      const dateOnly = t.slice(0, 10);
-      if (!seenDates.includes(dateOnly)) seenDates.push(dateOnly);
-    });
-    const labels = ['Oggi', 'Domani', 'Dopodomani'];
-    const tabsHtml = seenDates.slice(0, 3).map((dateStr, i) => {
-      const d = new Date(dateStr + 'T12:00:00');
-      const label = labels[i] || (DOW_SHORT[d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1));
-      return `<button class="${i === 0 ? 'active' : ''}" data-day="${i}" onclick="renderHourlyDay(${i})">${label}</button>`;
-    }).join('');
-    document.getElementById('hourly-tabs').innerHTML = tabsHtml;
-  }
-
-  function renderHourlyDay(dayIndex) {
-    hourlyDayIndex = dayIndex;
-    document.querySelectorAll('#hourly-tabs button').forEach(b => {
-      b.classList.toggle('active', parseInt(b.dataset.day) === dayIndex);
-    });
-    const times = hourlyData.hourly.time;
-    const temps = hourlyData.hourly.temperature_2m;
-    const rains = hourlyData.hourly.precipitation_probability;
-    const codes = hourlyData.hourly.weather_code;
-
-    const startIdx = dayIndex * 24;
-    const endIdx = startIdx + 24;
-    const cols = [];
-    for (let i = startIdx; i < endIdx && i < times.length; i++) {
-      const hh = times[i].slice(11, 16);
-      const [icon] = wmoInfo(codes[i]);
-      const rain = rains[i];
-      cols.push(`<div class="hour-col">
-        <span class="h-time">${hh}</span>
-        <i class="ti ${icon} h-icon" aria-hidden="true"></i>
-        <span class="h-temp">${Math.round(temps[i])}&deg;</span>
-        <span class="h-rain ${rain === 0 ? 'zero' : ''}">${rain}%</span>
-      </div>`);
-    }
-    document.getElementById('hourly-strip').innerHTML = cols.join('');
-  }
-
-  const LAT = 44.7756, LON = 10.7717;
+  let LAT = 44.7756, LON = 10.7717;
   const MODELS = ['ecmwf_ifs025', 'gfs_seamless', 'icon_seamless', 'gem_seamless', 'ukmo_seamless', 'meteofrance_seamless'];
   const DOW = ['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato'];
 
@@ -212,17 +125,55 @@
     const variance = arr.reduce((a,b)=>a+(b-mean)**2,0) / arr.length;
     return Math.sqrt(variance);
   }
-
   function agreementClass(spread) {
     if (spread < 1.5) return 'agree-alta';
     if (spread < 3.5) return 'agree-media';
     return 'agree-bassa';
   }
 
+  async function searchCity() {
+    const q = document.getElementById('search-input').value.trim();
+    if (!q) return;
+    const sugg = document.getElementById('suggestions');
+    sugg.innerHTML = '<div class="item">Ricerca in corso&hellip;</div>';
+    sugg.style.display = 'block';
+    try {
+      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=it&format=json`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const results = data.results || [];
+      if (results.length === 0) {
+        sugg.innerHTML = '<div class="item">Nessun risultato.</div>';
+        return;
+      }
+      sugg.innerHTML = results.map(r => {
+        const parts = [r.admin1, r.country].filter(Boolean).join(', ');
+        return `<div class="item" onclick='selectCity(${r.latitude}, ${r.longitude}, ${JSON.stringify(r.name)}, ${JSON.stringify(parts)})'>
+          <div>${r.name}</div><div class="region">${parts}</div>
+        </div>`;
+      }).join('');
+    } catch (e) {
+      sugg.innerHTML = '<div class="item">Ricerca non disponibile al momento.</div>';
+    }
+  }
+
+  function selectCity(lat, lon, name, region) {
+    LAT = lat; LON = lon;
+    document.getElementById('suggestions').style.display = 'none';
+    document.getElementById('search-input').value = '';
+    document.getElementById('current-place').innerHTML = `Città attuale: <b>${name}${region ? ', ' + region : ''}</b>`;
+    load();
+  }
+
+  document.getElementById('search-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchCity();
+  });
+
   async function load() {
+    document.getElementById('days').innerHTML = '<p class="status">Interrogazione dei 6 modelli in corso&hellip;</p>';
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
       `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum` +
-      `&models=${MODELS.join(',')}&timezone=Europe%2FRome&forecast_days=14`;
+      `&models=${MODELS.join(',')}&timezone=auto&forecast_days=14`;
 
     let data;
     try {
@@ -239,7 +190,7 @@
     let extraDaily = null;
     try {
       const extraUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
-        `&daily=uv_index_max,relative_humidity_2m_mean&timezone=Europe%2FRome&forecast_days=14`;
+        `&daily=uv_index_max,relative_humidity_2m_mean&timezone=auto&forecast_days=14`;
       const extraRes = await fetch(extraUrl);
       if (extraRes.ok) {
         const extraData = await extraRes.json();
@@ -292,7 +243,6 @@
   }
 
   load();
-  loadHourly();
 </script>
 </body>
 </html>
