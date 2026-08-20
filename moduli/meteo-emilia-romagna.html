@@ -35,12 +35,20 @@
   }
   .card .label { font-size: 13px; color: #6e6e73; margin: 0 0 6px; }
   .card .value { font-size: 22px; font-weight: 600; margin: 0; }
-  .cities { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 32px; }
-  .city { background: #fff; border-radius: 14px; padding: 14px 16px; border: 0.5px solid rgba(0,0,0,0.06); }
-  .city .name { font-size: 13px; color: #6e6e73; margin: 0 0 6px; }
-  .city .row { display: flex; align-items: center; gap: 6px; }
-  .city .row i { font-size: 18px; color: #86868b; }
-  .city .row span { font-size: 19px; font-weight: 600; }
+  .hourly-strip {
+    display: flex; gap: 2px; overflow-x: auto; background: #fff;
+    border-radius: 16px; border: 0.5px solid rgba(0,0,0,0.06); padding: 16px 12px; margin-bottom: 8px;
+  }
+  .hour-col {
+    flex: 0 0 auto; width: 62px; text-align: center; display: flex;
+    flex-direction: column; align-items: center; gap: 6px;
+  }
+  .hour-col .h-time { font-size: 11px; color: #86868b; }
+  .hour-col .h-icon { font-size: 18px; color: #6e6e73; }
+  .hour-col .h-temp { font-size: 13px; font-weight: 600; }
+  .hour-col .h-rain { font-size: 10px; color: #0071e3; }
+  .hour-col .h-rain.zero { color: #c7c7cc; }
+  .hour-col .h-wind { font-size: 10px; color: #86868b; }
   .section-title { font-size: 15px; font-weight: 600; margin: 0 0 14px; }
   .radar-embed {
     background: #fff;
@@ -65,6 +73,7 @@
   .dot-orange { background: #ff9500; } .stato-orange { color: #b96400; }
   .dot-red { background: #ff3b30; } .stato-red { color: #d70015; }
   .allerta-meta { font-size: 12px; color: #86868b; margin: -20px 0 32px; }
+  .status { font-size: 13px; color: #86868b; padding: 10px 0; }
   footer { text-align: center; font-size: 12px; color: #a1a1a6; margin-top: 32px; }
 </style>
 </head>
@@ -90,15 +99,12 @@
     <div class="card"><p class="label">Vento</p><p class="value" id="stat-wind">&hellip;</p></div>
   </div>
 
-  <p class="section-title">Città della regione</p>
-  <div class="cities">
-    <div class="city"><p class="name">Parma</p><div class="row"><i class="ti ti-cloud" id="icon-parma" aria-hidden="true"></i><span id="temp-parma">&hellip;</span></div></div>
-    <div class="city"><p class="name">Bologna</p><div class="row"><i class="ti ti-cloud" id="icon-bologna" aria-hidden="true"></i><span id="temp-bologna">&hellip;</span></div></div>
-    <div class="city"><p class="name">Ravenna</p><div class="row"><i class="ti ti-cloud" id="icon-ravenna" aria-hidden="true"></i><span id="temp-ravenna">&hellip;</span></div></div>
-    <div class="city"><p class="name">Rimini</p><div class="row"><i class="ti ti-cloud" id="icon-rimini" aria-hidden="true"></i><span id="temp-rimini">&hellip;</span></div></div>
+  <p class="section-title">Andamento orario &middot; oggi</p>
+  <div class="hourly-strip" id="hourly-strip">
+    <p class="status">Caricamento dettaglio orario&hellip;</p>
   </div>
 
-  <p class="section-title">Radar precipitazioni live &middot; Windy</p>
+  <p class="section-title" style="margin-top:28px;">Radar precipitazioni live &middot; Windy</p>
   <div class="radar-embed">
     <iframe
       src="https://embed.windy.com/embed2.html?lat=44.727&lon=11&zoom=7&level=surface&overlay=radar&menu=&message=&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=44.727&detailLon=11&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1"
@@ -188,22 +194,41 @@
       }
     }
 
-    async function loadCity(id, lat, lon) {
+    async function loadHourly() {
+      const strip = document.getElementById('hourly-strip');
       try {
-        const d = await fetchWeather(lat, lon);
-        const [icon] = wmoInfo(d.current.weather_code);
-        document.getElementById('temp-' + id).textContent = Math.round(d.current.temperature_2m) + '°';
-        document.getElementById('icon-' + id).className = 'ti ' + icon;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=44.7756&longitude=10.7717` +
+          `&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m` +
+          `&timezone=Europe%2FRome&forecast_days=1`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('http ' + res.status);
+        const d = await res.json();
+        const times = d.hourly.time;
+        const temps = d.hourly.temperature_2m;
+        const rains = d.hourly.precipitation_probability;
+        const codes = d.hourly.weather_code;
+        const winds = d.hourly.wind_speed_10m;
+
+        const cols = times.map((t, i) => {
+          const hh = t.slice(11, 16);
+          const [icon] = wmoInfo(codes[i]);
+          const rain = rains[i];
+          return `<div class="hour-col">
+            <span class="h-time">${hh}</span>
+            <i class="ti ${icon} h-icon" aria-hidden="true"></i>
+            <span class="h-temp">${Math.round(temps[i])}&deg;</span>
+            <span class="h-rain ${rain === 0 ? 'zero' : ''}">${rain}%</span>
+            <span class="h-wind">${Math.round(winds[i])} km/h</span>
+          </div>`;
+        });
+        strip.innerHTML = cols.join('');
       } catch (e) {
-        document.getElementById('temp-' + id).textContent = '--°';
+        strip.innerHTML = '<p class="status">Dettaglio orario non disponibile al momento.</p>';
       }
     }
 
     loadCorreggio();
-    loadCity('parma', 44.8015, 10.3279);
-    loadCity('bologna', 44.4949, 11.3426);
-    loadCity('ravenna', 44.4184, 12.2035);
-    loadCity('rimini', 44.0678, 12.5695);
+    loadHourly();
 
     document.getElementById('updated-time').textContent =
       new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });

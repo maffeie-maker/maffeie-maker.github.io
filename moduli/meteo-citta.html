@@ -61,6 +61,21 @@
   .card .value { font-size: 22px; font-weight: 600; margin: 0; }
 
   .section-title { font-size: 15px; font-weight: 600; margin: 0 0 14px; }
+  .hourly-strip {
+    display: flex; gap: 2px; overflow-x: auto; background: #fff;
+    border-radius: 16px; border: 0.5px solid rgba(0,0,0,0.06); padding: 16px 12px; margin-bottom: 28px;
+  }
+  .hour-col {
+    flex: 0 0 auto; width: 62px; text-align: center; display: flex;
+    flex-direction: column; align-items: center; gap: 6px;
+  }
+  .hour-col .h-time { font-size: 11px; color: #86868b; }
+  .hour-col .h-icon { font-size: 18px; color: #6e6e73; }
+  .hour-col .h-temp { font-size: 13px; font-weight: 600; }
+  .hour-col .h-rain { font-size: 10px; color: #0071e3; }
+  .hour-col .h-rain.zero { color: #c7c7cc; }
+  .hour-col .h-wind { font-size: 10px; color: #86868b; }
+  .status { font-size: 13px; color: #86868b; padding: 10px 0; }
   .radar-embed {
     background: #fff; border-radius: 18px; border: 0.5px solid rgba(0,0,0,0.06);
     overflow: hidden; margin-bottom: 8px;
@@ -102,6 +117,11 @@
     <div class="card"><p class="label">Minima oggi</p><p class="value" id="stat-min">&hellip;</p></div>
     <div class="card"><p class="label">Probabilit&agrave; pioggia</p><p class="value" id="stat-rain">&hellip;</p></div>
     <div class="card"><p class="label">Vento</p><p class="value" id="stat-wind">&hellip;</p></div>
+  </div>
+
+  <p class="section-title">Andamento orario &middot; oggi</p>
+  <div class="hourly-strip" id="hourly-strip">
+    <p class="status">Caricamento dettaglio orario&hellip;</p>
   </div>
 
   <p class="section-title">Radar precipitazioni live &middot; Windy</p>
@@ -161,6 +181,7 @@
     document.getElementById('search-input').value = '';
     document.getElementById('place-name').textContent = PLACE_NAME;
     loadWeather();
+    loadHourly();
     loadRadar();
   }
 
@@ -199,7 +220,42 @@
     }
   }
 
+  async function loadHourly() {
+    const strip = document.getElementById('hourly-strip');
+    strip.innerHTML = '<p class="status">Caricamento dettaglio orario&hellip;</p>';
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+        `&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m` +
+        `&timezone=auto&forecast_days=1`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('http ' + res.status);
+      const d = await res.json();
+      const times = d.hourly.time;
+      const temps = d.hourly.temperature_2m;
+      const rains = d.hourly.precipitation_probability;
+      const codes = d.hourly.weather_code;
+      const winds = d.hourly.wind_speed_10m;
+
+      const cols = times.map((t, i) => {
+        const hh = t.slice(11, 16);
+        const [icon] = wmoInfo(codes[i]);
+        const rain = rains[i];
+        return `<div class="hour-col">
+          <span class="h-time">${hh}</span>
+          <i class="ti ${icon} h-icon" aria-hidden="true"></i>
+          <span class="h-temp">${Math.round(temps[i])}&deg;</span>
+          <span class="h-rain ${rain === 0 ? 'zero' : ''}">${rain}%</span>
+          <span class="h-wind">${Math.round(winds[i])} km/h</span>
+        </div>`;
+      });
+      strip.innerHTML = cols.join('');
+    } catch (e) {
+      strip.innerHTML = '<p class="status">Dettaglio orario non disponibile al momento.</p>';
+    }
+  }
+
   loadWeather();
+  loadHourly();
   loadRadar();
   setTimeout(() => location.reload(), 20 * 60 * 1000);
 </script>
