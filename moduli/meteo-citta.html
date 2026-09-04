@@ -98,8 +98,12 @@
     <div class="search-row">
       <input id="search-input" type="text" placeholder="Cerca una città (es. Milano, Napoli, Parigi...)" autocomplete="off">
       <button onclick="searchCity()">Cerca</button>
+      <button id="geo-btn" onclick="useMyLocation()" title="Usa la mia posizione" style="background:#fff; color:#0071e3; border:1px solid rgba(0,0,0,0.1);">
+        <i class="ti ti-current-location" aria-hidden="true"></i>
+      </button>
     </div>
     <div id="suggestions"></div>
+    <p class="geo-status" id="geo-status" style="font-size:12px; color:#86868b; margin:8px 0 0;"></p>
   </div>
 
   <div class="hero">
@@ -254,6 +258,39 @@
     }
   }
 
+  function useMyLocation() {
+    const status = document.getElementById('geo-status');
+    if (!navigator.geolocation) {
+      status.textContent = 'Geolocalizzazione non supportata da questo browser.';
+      return;
+    }
+    status.textContent = 'Individuazione della posizione in corso…';
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      LAT = pos.coords.latitude;
+      LON = pos.coords.longitude;
+      try {
+        const revUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${LAT}&longitude=${LON}&localityLanguage=it`;
+        const revRes = await fetch(revUrl);
+        const revData = await revRes.json();
+        const name = revData.city || revData.locality || 'Posizione attuale';
+        const region = [revData.principalSubdivision, revData.countryName].filter(Boolean).join(', ');
+        PLACE_NAME = region ? `${name}, ${region}` : name;
+      } catch (e) {
+        PLACE_NAME = 'Posizione attuale';
+      }
+      document.getElementById('place-name').textContent = PLACE_NAME;
+      status.textContent = '';
+      loadWeather();
+      loadHourly();
+      loadRadar();
+    }, (err) => {
+      status.textContent = 'Posizione non disponibile (permesso negato o non concesso) — resto su Correggio.';
+    }, { timeout: 8000 });
+  }
+
+  // Al primo caricamento prova subito la posizione del dispositivo;
+  // se non concessa o non disponibile, resta su Correggio (valore di default).
+  useMyLocation();
   loadWeather();
   loadHourly();
   loadRadar();
