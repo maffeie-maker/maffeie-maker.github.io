@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meteo - La mia posizione</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    padding: 32px 16px 64px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  .back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: #0071e3; text-decoration: none; margin-bottom: 18px; }
+  h1 { font-size: 13px; font-weight: 500; color: #6e6e73; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px; }
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .geo-btn {
+    font-family: inherit; font-size: 12px; font-weight: 500; color: #0071e3;
+    background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 980px;
+    padding: 6px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+  }
+  .geo-status { font-size: 12px; color: #86868b; margin: 6px 0 18px; min-height: 14px; }
+
+  .hero { text-align: center; margin: 8px 0 22px; }
+  .hero .place { font-size: 21px; font-weight: 600; margin: 0; }
+  .hero .updated { font-size: 12px; color: #86868b; margin: 2px 0 0; }
+  .hero .icon-big { font-size: 64px; color: #6e6e73; margin: 10px 0 0; display: block; }
+  .hero .temp-big { font-size: 68px; font-weight: 300; margin: 0; line-height: 1; letter-spacing: -0.02em; }
+  .hero .cond { font-size: 16px; color: #6e6e73; margin: 4px 0 0; }
+  .hero .hilo { font-size: 15px; color: #6e6e73; margin: 4px 0 0; }
+  .hero .hilo b { color: #1d1d1f; font-weight: 600; }
+
+  .card-panel {
+    background: rgba(255,255,255,0.72); backdrop-filter: blur(20px);
+    border-radius: 18px; border: 0.5px solid rgba(0,0,0,0.06);
+    padding: 14px 6px; margin-bottom: 14px;
+  }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 14px; }
+  .stat-card {
+    background: rgba(255,255,255,0.72); backdrop-filter: blur(20px);
+    border-radius: 16px; border: 0.5px solid rgba(0,0,0,0.06); padding: 14px 16px;
+  }
+  .stat-card .s-label { font-size: 11px; color: #86868b; text-transform: uppercase; letter-spacing: 0.03em; margin: 0 0 6px; display: flex; align-items: center; gap: 5px; }
+  .stat-card .s-label i { font-size: 13px; }
+  .stat-card .s-value { font-size: 20px; font-weight: 600; margin: 0; }
+  .stat-card .s-sub { font-size: 12px; color: #86868b; margin: 2px 0 0; }
+
+  .radar-embed {
+    background: #fff; border-radius: 18px; border: 0.5px solid rgba(0,0,0,0.06);
+    overflow: hidden; margin-bottom: 8px;
+  }
+  .radar-embed iframe { width: 100%; height: 420px; border: 0; display: block; }
+  .radar-note { font-size: 12px; color: #86868b; margin: 0 0 14px; }
+  .days-row { display: flex; }
+  .day-tab {
+    flex: 1; text-align: center; padding: 8px 4px; border-radius: 12px;
+    cursor: pointer; font-size: 12px; color: #6e6e73;
+  }
+  .day-tab.active { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .day-tab .dname { font-weight: 600; font-size: 12px; margin-bottom: 4px; color: #1d1d1f; }
+  .day-tab.active .dname { color: #0071e3; }
+  .day-tab i { font-size: 20px; color: #6e6e73; display: block; margin: 4px 0; }
+  .day-tab .drange { font-size: 11px; color: #86868b; }
+  .day-tab .drange b { color: #1d1d1f; }
+
+  .hourly-strip {
+    display: flex; gap: 2px; overflow-x: auto; background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(20px); border-radius: 18px; border: 0.5px solid rgba(0,0,0,0.06);
+    padding: 16px 12px; margin-bottom: 14px;
+  }
+  .hour-col {
+    flex: 0 0 auto; width: 58px; text-align: center; display: flex;
+    flex-direction: column; align-items: center; gap: 6px;
+  }
+  .hour-col .h-time { font-size: 11px; color: #86868b; }
+  .hour-col .h-icon { font-size: 18px; color: #6e6e73; }
+  .hour-col .h-temp { font-size: 13px; font-weight: 600; }
+  .hour-col .h-rain { font-size: 10px; color: #0071e3; }
+  .hour-col .h-rain.zero { color: #c7c7cc; }
+
+  .status { font-size: 13px; color: #86868b; padding: 20px 0; text-align: center; }
+  footer { text-align: center; font-size: 12px; color: #a1a1a6; margin-top: 32px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top-bar">
+    <a class="back" href="../index.html" style="margin-bottom:0;"><i class="ti ti-chevron-left" aria-hidden="true"></i> Weather Commander</a>
+    <button class="geo-btn" onclick="useMyLocation()"><i class="ti ti-current-location" aria-hidden="true"></i>Aggiorna posizione</button>
+  </div>
+  <p class="geo-status" id="geo-status"></p>
+
+  <div class="hero">
+    <p class="place" id="place-name">Correggio, Reggio Emilia</p>
+    <p class="updated">Aggiornato alle <span id="updated-time">&hellip;</span></p>
+    <i class="ti ti-cloud icon-big" id="hero-icon" aria-hidden="true"></i>
+    <p class="temp-big" id="hero-temp">&hellip;</p>
+    <p class="cond" id="hero-cond">Caricamento&hellip;</p>
+    <p class="hilo" id="hero-hilo"></p>
+  </div>
+
+  <div class="card-panel">
+    <div class="days-row" id="days-row"></div>
+  </div>
+
+  <div class="hourly-strip" id="hourly-strip">
+    <p class="status">Caricamento dettaglio orario&hellip;</p>
+  </div>
+
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat-card"><p class="s-label"><i class="ti ti-sun-high" aria-hidden="true"></i>Indice UV</p><p class="s-value" id="stat-uv">&hellip;</p></div>
+    <div class="stat-card"><p class="s-label"><i class="ti ti-sunrise" aria-hidden="true"></i>Alba</p><p class="s-value" id="stat-sunrise">&hellip;</p></div>
+    <div class="stat-card"><p class="s-label"><i class="ti ti-sunset" aria-hidden="true"></i>Tramonto</p><p class="s-value" id="stat-sunset">&hellip;</p></div>
+    <div class="stat-card"><p class="s-label"><i class="ti ti-wind" aria-hidden="true"></i>Vento</p><p class="s-value" id="stat-wind">&hellip;</p><p class="s-sub" id="stat-wind-dir"></p></div>
+    <div class="stat-card"><p class="s-label"><i class="ti ti-moon" aria-hidden="true"></i>Fase lunare</p><p class="s-value" id="stat-moon" style="font-size:15px;">&hellip;</p></div>
+    <div class="stat-card"><p class="s-label"><i class="ti ti-droplet" aria-hidden="true"></i>Umidit&agrave;</p><p class="s-value" id="stat-humidity">&hellip;</p></div>
+    <div class="stat-card"><p class="s-label"><i class="ti ti-gauge" aria-hidden="true"></i>Pressione</p><p class="s-value" id="stat-pressure">&hellip;</p></div>
+    <div class="stat-card"><p class="s-label"><i class="ti ti-eye" aria-hidden="true"></i>Visibilit&agrave;</p><p class="s-value" id="stat-visibility">&hellip;</p><p class="s-sub" id="stat-fog-note"></p></div>
+    <div class="stat-card"><p class="s-label"><i class="ti ti-snowflake" aria-hidden="true"></i>Neve prevista</p><p class="s-value" id="stat-snow">&hellip;</p><p class="s-sub" id="stat-snow-sub"></p></div>
+  </div>
+
+  <p class="ctitle" style="margin: 0 0 10px;">Radar precipitazioni live &middot; Windy</p>
+  <div class="radar-embed">
+    <iframe id="radar-iframe" src="" loading="lazy" title="Radar precipitazioni live"></iframe>
+  </div>
+  <p class="radar-note">Radar ricentrato automaticamente sulla posizione rilevata.</p>
+
+  <footer>Weather Commander &middot; dati Open-Meteo &middot; radar Windy &middot; posizione da geolocalizzazione del dispositivo</footer>
+</div>
+
+<script>
+  let LAT = 44.7756, LON = 10.7717;
+  let PLACE_NAME = 'Correggio, Reggio Emilia';
+  let selectedDay = 0;
+  let hourlyFull = null;
+  let dailyFull = null;
+
+  const WMO = {
+    0: ['ti-sun', 'Sereno'], 1: ['ti-sun', 'Prevalentemente sereno'], 2: ['ti-cloud', 'Parzialmente nuvoloso'],
+    3: ['ti-cloud', 'Nuvoloso'], 45: ['ti-cloud-fog', 'Nebbia'], 48: ['ti-cloud-fog', 'Nebbia con brina'],
+    51: ['ti-cloud-drizzle', 'Pioviggine debole'], 53: ['ti-cloud-drizzle', 'Pioviggine'], 55: ['ti-cloud-drizzle', 'Pioviggine intensa'],
+    61: ['ti-cloud-rain', 'Pioggia debole'], 63: ['ti-cloud-rain', 'Pioggia'], 65: ['ti-cloud-rain', 'Pioggia intensa'],
+    71: ['ti-snowflake', 'Neve debole'], 73: ['ti-snowflake', 'Neve'], 75: ['ti-snowflake', 'Neve intensa'],
+    80: ['ti-cloud-rain', 'Rovesci'], 81: ['ti-cloud-rain', 'Rovesci'], 82: ['ti-cloud-rain', 'Rovesci forti'],
+    95: ['ti-cloud-bolt', 'Temporale'], 96: ['ti-cloud-bolt', 'Temporale con grandine'], 99: ['ti-cloud-bolt', 'Temporale forte']
+  };
+  function wmoInfo(code) { return WMO[code] || ['ti-cloud', 'Variabile']; }
+
+  const DAY_LABELS = ['Oggi', 'Domani', 'Dopodomani'];
+
+  function useMyLocation() {
+    const status = document.getElementById('geo-status');
+    if (!navigator.geolocation) {
+      status.textContent = 'Geolocalizzazione non supportata da questo browser.';
+      return;
+    }
+    status.textContent = 'Individuazione della posizione in corso…';
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      LAT = pos.coords.latitude;
+      LON = pos.coords.longitude;
+      try {
+        const revUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${LAT}&longitude=${LON}&localityLanguage=it`;
+        const revRes = await fetch(revUrl);
+        const revData = await revRes.json();
+        const name = revData.city || revData.locality || 'Posizione attuale';
+        const region = [revData.principalSubdivision, revData.countryName].filter(Boolean).join(', ');
+        PLACE_NAME = region ? `${name}, ${region}` : name;
+      } catch (e) {
+        PLACE_NAME = 'Posizione attuale';
+      }
+      document.getElementById('place-name').textContent = PLACE_NAME;
+      status.textContent = '';
+      loadAll();
+    }, (err) => {
+      status.textContent = 'Posizione non disponibile (permesso negato) — resto su Correggio.';
+    }, { timeout: 8000 });
+  }
+
+  function findClosestHourIndex(times) {
+    const now = new Date();
+    let best = null, bestDiff = Infinity;
+    times.forEach((t, i) => {
+      const diff = Math.abs(new Date(t).getTime() - now.getTime());
+      if (diff < bestDiff) { bestDiff = diff; best = i; }
+    });
+    return best;
+  }
+
+  function degToCompass(deg) {
+    const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+    return dirs[Math.round(deg / 45) % 8];
+  }
+
+  // Fase lunare calcolata localmente (nessuna API la fornisce):
+  // età lunare in giorni rispetto a un novilunio di riferimento noto,
+  // sul ciclo sinodico medio di 29.53 giorni.
+  function moonPhase(date) {
+    const synodicMonth = 29.530588853;
+    const knownNewMoon = new Date('2000-01-06T18:14:00Z').getTime();
+    const diffDays = (date.getTime() - knownNewMoon) / 86400000;
+    const age = ((diffDays % synodicMonth) + synodicMonth) % synodicMonth;
+    const names = [
+      'Luna nuova', 'Luna crescente', 'Primo quarto', 'Gibbosa crescente',
+      'Luna piena', 'Gibbosa calante', 'Ultimo quarto', 'Luna calante'
+    ];
+    const idx = Math.floor((age / synodicMonth) * 8) % 8;
+    return names[idx];
+  }
+
+  function loadRadar() {
+    const src = `https://embed.windy.com/embed2.html?lat=${LAT}&lon=${LON}&zoom=8&level=surface&overlay=radar&menu=&message=&marker=&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=${LAT}&detailLon=${LON}&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
+    document.getElementById('radar-iframe').src = src;
+  }
+
+  async function loadAll() {
+    document.getElementById('hero-cond').textContent = 'Caricamento…';
+    document.getElementById('hourly-strip').innerHTML = '<p class="status">Caricamento dettaglio orario…</p>';
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+        `&current=temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_direction_10m` +
+        `&hourly=temperature_2m,precipitation_probability,weather_code,uv_index,visibility` +
+        `&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset,uv_index_max,snowfall_sum` +
+        `&timezone=auto&forecast_days=3`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('http ' + res.status);
+      const d = await res.json();
+
+      hourlyFull = d.hourly;
+      dailyFull = d.daily;
+
+      const [icon, text] = wmoInfo(d.current.weather_code);
+      document.getElementById('hero-icon').className = 'ti ' + icon + ' icon-big';
+      document.getElementById('hero-temp').textContent = Math.round(d.current.temperature_2m) + '°';
+      document.getElementById('hero-cond').textContent = text + ' · percepita ' + Math.round(d.current.apparent_temperature) + '°';
+      document.getElementById('hero-hilo').innerHTML =
+        `Max <b>${Math.round(d.daily.temperature_2m_max[0])}°</b> &middot; Min <b>${Math.round(d.daily.temperature_2m_min[0])}°</b>`;
+      document.getElementById('updated-time').textContent =
+        new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+      // UV attuale: preso dal valore orario più vicino all'ora corrente
+      const nowIdx = findClosestHourIndex(d.hourly.time);
+      const uvNow = (nowIdx != null && d.hourly.uv_index) ? d.hourly.uv_index[nowIdx] : null;
+      document.getElementById('stat-uv').textContent = uvNow != null ? uvNow.toFixed(1) : '--';
+
+      const sunriseTime = new Date(d.daily.sunrise[0]);
+      const sunsetTime = new Date(d.daily.sunset[0]);
+      document.getElementById('stat-sunrise').textContent = sunriseTime.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('stat-sunset').textContent = sunsetTime.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+      document.getElementById('stat-wind').textContent = Math.round(d.current.wind_speed_10m) + ' km/h';
+      document.getElementById('stat-wind-dir').textContent = degToCompass(d.current.wind_direction_10m);
+
+      document.getElementById('stat-humidity').textContent = Math.round(d.current.relative_humidity_2m) + '%';
+      document.getElementById('stat-pressure').textContent = Math.round(d.current.surface_pressure) + ' hPa';
+
+      const moon = moonPhase(new Date());
+      document.getElementById('stat-moon').textContent = moon;
+
+      loadRadar();
+      buildDaysRow();
+      selectedDay = 0;
+      renderDay(0);
+    } catch (e) {
+      document.getElementById('hero-cond').textContent = 'Dati non disponibili al momento';
+      document.getElementById('hourly-strip').innerHTML = '<p class="status">Dettaglio orario non disponibile.</p>';
+    }
+  }
+
+  function buildDaysRow() {
+    const dates = dailyFull.time;
+    const row = dates.map((dateStr, i) => {
+      const [icon] = wmoInfo(dailyFull.weather_code[i]);
+      const label = DAY_LABELS[i] || dateStr;
+      return `<div class="day-tab ${i === 0 ? 'active' : ''}" data-day="${i}" onclick="renderDay(${i})">
+        <div class="dname">${label}</div>
+        <i class="ti ${icon}" aria-hidden="true"></i>
+        <div class="drange"><b>${Math.round(dailyFull.temperature_2m_max[i])}°</b> / ${Math.round(dailyFull.temperature_2m_min[i])}°</div>
+      </div>`;
+    }).join('');
+    document.getElementById('days-row').innerHTML = row;
+  }
+
+  function renderDay(dayIndex) {
+    selectedDay = dayIndex;
+    document.querySelectorAll('.day-tab').forEach(el => {
+      el.classList.toggle('active', parseInt(el.dataset.day) === dayIndex);
+    });
+
+    const times = hourlyFull.time;
+    const temps = hourlyFull.temperature_2m;
+    const rains = hourlyFull.precipitation_probability;
+    const codes = hourlyFull.weather_code;
+
+    const startIdx = dayIndex * 24;
+    const endIdx = Math.min(startIdx + 24, times.length);
+
+    const cols = [];
+    for (let i = startIdx; i < endIdx; i++) {
+      const hh = times[i].slice(11, 16);
+      const [icon] = wmoInfo(codes[i]);
+      cols.push(`<div class="hour-col">
+        <span class="h-time">${hh}</span>
+        <i class="ti ${icon} h-icon" aria-hidden="true"></i>
+        <span class="h-temp">${Math.round(temps[i])}°</span>
+        <span class="h-rain ${rains[i] === 0 ? 'zero' : ''}">${rains[i]}%</span>
+      </div>`);
+    }
+    document.getElementById('hourly-strip').innerHTML = cols.join('');
+
+    // Neve prevista per il giorno selezionato (accumulo giornaliero)
+    if (dailyFull && dailyFull.snowfall_sum) {
+      const snowCm = dailyFull.snowfall_sum[dayIndex];
+      document.getElementById('stat-snow').textContent = snowCm > 0 ? snowCm.toFixed(1) + ' cm' : 'Nessuna';
+      document.getElementById('stat-snow-sub').textContent = dayIndex === 0 ? 'oggi' : (DAY_LABELS[dayIndex] || '').toLowerCase();
+    }
+
+    // Visibilità: presa dall'ora corrente se è il giorno di oggi, altrimenti media del giorno
+    if (hourlyFull.visibility) {
+      let visMeters;
+      if (dayIndex === 0) {
+        const nowIdx = findClosestHourIndex(times);
+        visMeters = hourlyFull.visibility[nowIdx];
+      } else {
+        const slice = hourlyFull.visibility.slice(startIdx, endIdx).filter(v => v != null);
+        visMeters = slice.length ? slice.reduce((a,b)=>a+b,0) / slice.length : null;
+      }
+      if (visMeters != null) {
+        const visKm = visMeters / 1000;
+        document.getElementById('stat-visibility').textContent = visKm.toFixed(1) + ' km';
+        document.getElementById('stat-fog-note').textContent = visKm < 1 ? 'Nebbia fitta' : (visKm < 4 ? 'Foschia/nebbia possibile' : '');
+      }
+    }
+  }
+
+  // Al primo caricamento prova subito la posizione del dispositivo;
+  // se non concessa o non disponibile, resta su Correggio (valore di default).
+  useMyLocation();
+  loadAll();
+  setTimeout(() => location.reload(), 20 * 60 * 1000);
+</script>
+</body>
+</html>
