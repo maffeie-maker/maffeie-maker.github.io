@@ -47,7 +47,8 @@
     border-radius: 28px; border: 0.5px solid rgba(0,0,0,0.06); padding: 16px 18px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.22);
   }
-  .stat-card .s-label { font-size: 11px; color: #86868b; text-transform: uppercase; letter-spacing: 0.03em; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  .stat-card { text-align: center; }
+  .stat-card .s-label { font-size: 11px; color: #86868b; text-transform: uppercase; letter-spacing: 0.03em; margin: 0 0 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
   .stat-card .icon-badge {
     width: 26px; height: 26px; border-radius: 8px; flex: 0 0 auto;
     display: flex; align-items: center; justify-content: center;
@@ -75,7 +76,7 @@
   .radar-note { font-size: 12px; color: #86868b; margin: 0 0 14px; }
   .days-row { display: flex; }
   .day-tab {
-    flex: 1; text-align: center; padding: 8px 4px; border-radius: 12px;
+    flex: 1; text-align: center; padding: 10px 4px; border-radius: 20px;
     cursor: pointer; font-size: 12px; color: #6e6e73;
   }
   .day-tab.active { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
@@ -90,7 +91,7 @@
     padding: 16px 14px; margin-bottom: 14px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.22);
   }
-  .chart-panel .ctitle { font-size: 13px; font-weight: 600; margin: 0 0 10px; }
+  .chart-panel .ctitle { font-size: 13px; font-weight: 600; margin: 0 0 10px; text-align: center; }
   .chart-wrap { position: relative; width: 100%; height: 220px; }
 
   .status { font-size: 13px; color: #86868b; padding: 20px 0; text-align: center; }
@@ -138,13 +139,10 @@
     <div class="stat-card"><p class="s-label"><span class="icon-badge icon-snow"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2.5" x2="12" y2="21.5"/><line x1="4" y1="7.2" x2="20" y2="16.8"/><line x1="20" y1="7.2" x2="4" y2="16.8"/><path d="M12 2.5l-1.6 1.8M12 2.5l1.6 1.8"/><path d="M12 21.5l-1.6-1.8M12 21.5l1.6-1.8"/><path d="M4 7.2l2.3.4M4 7.2l.6-2.2"/><path d="M20 16.8l-2.3-.4M20 16.8l-.6 2.2"/><path d="M20 7.2l-2.3.4M20 7.2l-.6-2.2"/><path d="M4 16.8l2.3-.4M4 16.8l.6 2.2"/></svg></span>Neve prevista</p><p class="s-value" id="stat-snow">&hellip;</p><p class="s-sub" id="stat-snow-sub"></p></div>
   </div>
 
-  <p class="ctitle" style="margin: 0 0 10px;">Radar precipitazioni live &middot; Windy</p>
   <div class="radar-embed">
     <iframe id="radar-iframe" src="" loading="lazy" title="Radar precipitazioni live"></iframe>
   </div>
-  <p class="radar-note">Radar ricentrato automaticamente sulla posizione rilevata.</p>
 
-  <footer>Weather Commander &middot; dati Open-Meteo &middot; radar Windy &middot; posizione da geolocalizzazione del dispositivo</footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -323,7 +321,12 @@
       chartTemps.push(temps[i]);
       chartRains.push(rains[i]);
     }
-    drawChart(chartLabels, chartTemps, chartRains);
+    // Indicatore dell'ora corrente nel grafico: solo per "Oggi"
+    let currentHourIndex = null;
+    if (dayIndex === 0) {
+      currentHourIndex = findClosestHourIndex(times.slice(startIdx, endIdx));
+    }
+    drawChart(chartLabels, chartTemps, chartRains, currentHourIndex);
 
     // Neve prevista per il giorno selezionato (accumulo giornaliero)
     if (dailyFull && dailyFull.snowfall_sum) {
@@ -350,9 +353,26 @@
     }
   }
 
-  // Al primo caricamento prova subito la posizione del dispositivo;
-  // se non concessa o non disponibile, resta su Correggio (valore di default).
-  function drawChart(labels, temps, rains) {
+  const currentTimeLinePlugin = {
+    id: 'currentTimeLine',
+    afterDraw(chart) {
+      const idx = chart.config._currentHourIndex;
+      if (idx == null) return;
+      const { ctx, chartArea, scales } = chart;
+      const x = scales.x.getPixelForValue(idx);
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, chartArea.top);
+      ctx.lineTo(x, chartArea.bottom);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(255,59,48,0.7)';
+      ctx.setLineDash([4, 3]);
+      ctx.stroke();
+      ctx.restore();
+    }
+  };
+
+  function drawChart(labels, temps, rains, currentHourIndex) {
     const ctx = document.getElementById('tempChart');
     if (chartInstance) chartInstance.destroy();
     chartInstance = new Chart(ctx, {
@@ -372,8 +392,11 @@
           x: { grid: { display: false }, ticks: { color: '#898781', font: { size: 10 }, maxTicksLimit: 8 } }
         },
         plugins: { legend: { display: false } }
-      }
+      },
+      plugins: [currentTimeLinePlugin]
     });
+    chartInstance.config._currentHourIndex = currentHourIndex;
+    chartInstance.update();
   }
 
   useMyLocation();
