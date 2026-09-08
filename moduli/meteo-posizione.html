@@ -29,12 +29,31 @@
   body.wx-fog-night { background: linear-gradient(180deg, #22262b 0%, #3b4147 55%, #5c6469 100%); }
   body.wx-storm-day { background: linear-gradient(180deg, #3a3f52 0%, #545a72 50%, #7a8098 100%); }
   body.wx-storm-night { background: linear-gradient(180deg, #0a0c14 0%, #1a1e2e 55%, #2e3448 100%); }
-  body[class^="wx-"] .place, body[class^="wx-"] .updated, body[class^="wx-"] .cond,
-  body[class^="wx-"] .hilo, body[class^="wx-"] h1, body[class^="wx-"] .back,
-  body[class^="wx-"] .geo-btn, body[class^="wx-"] .icon-big, body[class^="wx-"] .temp-big { color: #fff; }
-  body[class^="wx-"] .hilo b { color: #fff; }
-  body[class^="wx-"] .geo-btn { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.28); color: #fff; }
-  body[class^="wx-"] .geo-status { color: rgba(255,255,255,0.75); }
+  /* Testo chiaro solo sugli sfondi scuri/saturi dove il bianco è leggibile */
+  body.wx-clear-day .place, body.wx-clear-day .updated, body.wx-clear-day .cond,
+  body.wx-clear-day .hilo, body.wx-clear-day h1, body.wx-clear-day .back,
+  body.wx-clear-day .geo-btn, body.wx-clear-day .icon-big, body.wx-clear-day .temp-big,
+  body.wx-rain-day .place, body.wx-rain-day .updated, body.wx-rain-day .cond,
+  body.wx-rain-day .hilo, body.wx-rain-day h1, body.wx-rain-day .back,
+  body.wx-rain-day .geo-btn, body.wx-rain-day .icon-big, body.wx-rain-day .temp-big,
+  body.wx-storm-day .place, body.wx-storm-day .updated, body.wx-storm-day .cond,
+  body.wx-storm-day .hilo, body.wx-storm-day h1, body.wx-storm-day .back,
+  body.wx-storm-day .geo-btn, body.wx-storm-day .icon-big, body.wx-storm-day .temp-big,
+  body[class*="-night"] .place, body[class*="-night"] .updated, body[class*="-night"] .cond,
+  body[class*="-night"] .hilo, body[class*="-night"] h1, body[class*="-night"] .back,
+  body[class*="-night"] .geo-btn, body[class*="-night"] .icon-big, body[class*="-night"] .temp-big
+  { color: #fff; }
+  body.wx-clear-day .hilo b, body.wx-rain-day .hilo b, body.wx-storm-day .hilo b,
+  body[class*="-night"] .hilo b { color: #fff; }
+  body.wx-clear-day .geo-btn, body.wx-rain-day .geo-btn, body.wx-storm-day .geo-btn,
+  body[class*="-night"] .geo-btn { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.28); color: #fff; }
+  body.wx-clear-day .geo-status, body.wx-rain-day .geo-status, body.wx-storm-day .geo-status,
+  body[class*="-night"] .geo-status { color: rgba(255,255,255,0.75); }
+
+  /* Sfondi chiari/pastello (neve, nebbia, nuvoloso di giorno): testo scuro di default già leggibile */
+  body.wx-snow-day .geo-btn, body.wx-fog-day .geo-btn, body.wx-cloudy-day .geo-btn {
+    background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1);
+  }
   .wrap { max-width: 760px; margin: 0 auto; }
   .back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: #0071e3; text-decoration: none; margin-bottom: 18px; }
   h1 { font-size: 13px; font-weight: 500; color: #6e6e73; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px; }
