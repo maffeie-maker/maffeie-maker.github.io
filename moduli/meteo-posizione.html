@@ -38,21 +38,38 @@
     background: rgba(255,255,255,0.72); backdrop-filter: blur(20px);
     border-radius: 18px; border: 0.5px solid rgba(0,0,0,0.06);
     padding: 14px 6px; margin-bottom: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
   }
 
   .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 14px; }
   .stat-card {
-    background: rgba(255,255,255,0.72); backdrop-filter: blur(20px);
+    background: #fff;
     border-radius: 16px; border: 0.5px solid rgba(0,0,0,0.06); padding: 14px 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
   }
-  .stat-card .s-label { font-size: 11px; color: #86868b; text-transform: uppercase; letter-spacing: 0.03em; margin: 0 0 6px; display: flex; align-items: center; gap: 5px; }
-  .stat-card .s-label i { font-size: 13px; }
+  .stat-card .s-label { font-size: 11px; color: #86868b; text-transform: uppercase; letter-spacing: 0.03em; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  .stat-card .icon-badge {
+    width: 26px; height: 26px; border-radius: 8px; flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+  }
+  .icon-uv { background: #ff9500; }
+  .icon-sunrise { background: #ffcc00; }
+  .icon-sunset { background: #ff453a; }
+  .icon-wind { background: #34c759; }
+  .icon-moon { background: #5e5ce6; }
+  .icon-humidity { background: #0071e3; }
+  .icon-pressure { background: #8e8e93; }
+  .icon-visibility { background: #5ac8fa; }
+  .icon-snow { background: #64d2ff; }
+  .stat-card .icon-badge svg { display: block; }
   .stat-card .s-value { font-size: 20px; font-weight: 600; margin: 0; }
   .stat-card .s-sub { font-size: 12px; color: #86868b; margin: 2px 0 0; }
 
   .radar-embed {
     background: #fff; border-radius: 18px; border: 0.5px solid rgba(0,0,0,0.06);
     overflow: hidden; margin-bottom: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
   }
   .radar-embed iframe { width: 100%; height: 420px; border: 0; display: block; }
   .radar-note { font-size: 12px; color: #86868b; margin: 0 0 14px; }
@@ -68,20 +85,13 @@
   .day-tab .drange { font-size: 11px; color: #86868b; }
   .day-tab .drange b { color: #1d1d1f; }
 
-  .hourly-strip {
-    display: flex; gap: 2px; overflow-x: auto; background: rgba(255,255,255,0.72);
-    backdrop-filter: blur(20px); border-radius: 18px; border: 0.5px solid rgba(0,0,0,0.06);
-    padding: 16px 12px; margin-bottom: 14px;
+  .chart-panel {
+    background: #fff; border-radius: 18px; border: 0.5px solid rgba(0,0,0,0.06);
+    padding: 16px 14px; margin-bottom: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
   }
-  .hour-col {
-    flex: 0 0 auto; width: 58px; text-align: center; display: flex;
-    flex-direction: column; align-items: center; gap: 6px;
-  }
-  .hour-col .h-time { font-size: 11px; color: #86868b; }
-  .hour-col .h-icon { font-size: 18px; color: #6e6e73; }
-  .hour-col .h-temp { font-size: 13px; font-weight: 600; }
-  .hour-col .h-rain { font-size: 10px; color: #0071e3; }
-  .hour-col .h-rain.zero { color: #c7c7cc; }
+  .chart-panel .ctitle { font-size: 13px; font-weight: 600; margin: 0 0 10px; }
+  .chart-wrap { position: relative; width: 100%; height: 220px; }
 
   .status { font-size: 13px; color: #86868b; padding: 20px 0; text-align: center; }
   footer { text-align: center; font-size: 12px; color: #a1a1a6; margin-top: 32px; }
@@ -109,20 +119,23 @@
     <div class="days-row" id="days-row"></div>
   </div>
 
-  <div class="hourly-strip" id="hourly-strip">
-    <p class="status">Caricamento dettaglio orario&hellip;</p>
+  <div class="chart-panel">
+    <p class="ctitle">Andamento temperatura e pioggia</p>
+    <div class="chart-wrap">
+      <canvas id="tempChart"></canvas>
+    </div>
   </div>
 
   <div class="stats-grid" id="stats-grid">
-    <div class="stat-card"><p class="s-label"><i class="ti ti-sun-high" aria-hidden="true"></i>Indice UV</p><p class="s-value" id="stat-uv">&hellip;</p></div>
-    <div class="stat-card"><p class="s-label"><i class="ti ti-sunrise" aria-hidden="true"></i>Alba</p><p class="s-value" id="stat-sunrise">&hellip;</p></div>
-    <div class="stat-card"><p class="s-label"><i class="ti ti-sunset" aria-hidden="true"></i>Tramonto</p><p class="s-value" id="stat-sunset">&hellip;</p></div>
-    <div class="stat-card"><p class="s-label"><i class="ti ti-wind" aria-hidden="true"></i>Vento</p><p class="s-value" id="stat-wind">&hellip;</p><p class="s-sub" id="stat-wind-dir"></p></div>
-    <div class="stat-card"><p class="s-label"><i class="ti ti-moon" aria-hidden="true"></i>Fase lunare</p><p class="s-value" id="stat-moon" style="font-size:15px;">&hellip;</p></div>
-    <div class="stat-card"><p class="s-label"><i class="ti ti-droplet" aria-hidden="true"></i>Umidit&agrave;</p><p class="s-value" id="stat-humidity">&hellip;</p></div>
-    <div class="stat-card"><p class="s-label"><i class="ti ti-gauge" aria-hidden="true"></i>Pressione</p><p class="s-value" id="stat-pressure">&hellip;</p></div>
-    <div class="stat-card"><p class="s-label"><i class="ti ti-eye" aria-hidden="true"></i>Visibilit&agrave;</p><p class="s-value" id="stat-visibility">&hellip;</p><p class="s-sub" id="stat-fog-note"></p></div>
-    <div class="stat-card"><p class="s-label"><i class="ti ti-snowflake" aria-hidden="true"></i>Neve prevista</p><p class="s-value" id="stat-snow">&hellip;</p><p class="s-sub" id="stat-snow-sub"></p></div>
+    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-uv"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><line x1="12" y1="1.5" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22.5" y2="12"/><line x1="4.5" y1="4.5" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.5" y2="19.5"/><line x1="4.5" y1="19.5" x2="6.3" y2="17.7"/><line x1="17.7" y1="6.3" x2="19.5" y2="4.5"/></svg></span>Indice UV</p><p class="s-value" id="stat-uv">&hellip;</p></div>
+    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-sunrise"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4"/><path d="M5.6 8.6l1.8 1.8"/><path d="M16.6 8.6l-1.8 1.8"/><path d="M3 14h2.5"/><path d="M18.5 14H21"/><path d="M6 18h12"/><path d="M8 14a4 4 0 0 1 8 0"/><path d="M2 21h20"/></svg></span>Alba</p><p class="s-value" id="stat-sunrise">&hellip;</p></div>
+    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-sunset"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10V6"/><path d="M5.6 8.6l1.8 1.8"/><path d="M16.6 8.6l-1.8 1.8"/><path d="M3 14h2.5"/><path d="M18.5 14H21"/><path d="M6 18h12"/><path d="M8 14a4 4 0 0 1 8 0"/><path d="M2 21h20"/></svg></span>Tramonto</p><p class="s-value" id="stat-sunset">&hellip;</p></div>
+    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-wind"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9.5h11a2.8 2.8 0 1 0-2.8-2.8"/><path d="M2.5 14.5h15.5a2.8 2.8 0 1 1-2.8 2.8"/><path d="M2.5 19h9a2.2 2.2 0 1 0-2.2-2.2"/></svg></span>Vento</p><p class="s-value" id="stat-wind">&hellip;</p><p class="s-sub" id="stat-wind-dir"></p></div>
+    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-moon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 12.5a7.5 7.5 0 0 1-9.9-9.9 8 8 0 1 0 9.9 9.9z"/><circle cx="19" cy="5" r="0.6" fill="currentColor" stroke="none"/><circle cx="20.5" cy="8.5" r="0.4" fill="currentColor" stroke="none"/></svg></span>Fase lunare</p><p class="s-value" id="stat-moon" style="font-size:15px;">&hellip;</p></div>
+    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-humidity"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c3 4 6.5 8.2 6.5 12A6.5 6.5 0 0 1 5.5 14.5c0-3.8 3.5-8 6.5-12z"/><path d="M9.3 15.5a2.7 2.7 0 0 0 2.7 2.7"/></svg></span>Umidit&agrave;</p><p class="s-value" id="stat-humidity">&hellip;</p></div>
+    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-pressure"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 13l3.2-3.2"/><path d="M9 4.5h6"/></svg></span>Pressione</p><p class="s-value" id="stat-pressure">&hellip;</p></div>
+    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-visibility"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9c1.8-1.8 3.8-2.7 6-2.7"/><path d="M2 12.5c2.5-2.2 5-3.3 10-3.3s7.5 1.1 10 3.3"/><path d="M2 16c3.2-1.3 6.2-2 10-2s6.8.7 10 2"/></svg></span>Visibilit&agrave;</p><p class="s-value" id="stat-visibility">&hellip;</p><p class="s-sub" id="stat-fog-note"></p></div>
+    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-snow"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2.5" x2="12" y2="21.5"/><line x1="4" y1="7.2" x2="20" y2="16.8"/><line x1="20" y1="7.2" x2="4" y2="16.8"/><path d="M12 2.5l-1.6 1.8M12 2.5l1.6 1.8"/><path d="M12 21.5l-1.6-1.8M12 21.5l1.6-1.8"/><path d="M4 7.2l2.3.4M4 7.2l.6-2.2"/><path d="M20 16.8l-2.3-.4M20 16.8l-.6 2.2"/><path d="M20 7.2l-2.3.4M20 7.2l-.6-2.2"/><path d="M4 16.8l2.3-.4M4 16.8l.6 2.2"/></svg></span>Neve prevista</p><p class="s-value" id="stat-snow">&hellip;</p><p class="s-sub" id="stat-snow-sub"></p></div>
   </div>
 
   <p class="ctitle" style="margin: 0 0 10px;">Radar precipitazioni live &middot; Windy</p>
@@ -134,12 +147,14 @@
   <footer>Weather Commander &middot; dati Open-Meteo &middot; radar Windy &middot; posizione da geolocalizzazione del dispositivo</footer>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
   let LAT = 44.7756, LON = 10.7717;
   let PLACE_NAME = 'Correggio, Reggio Emilia';
   let selectedDay = 0;
   let hourlyFull = null;
   let dailyFull = null;
+  let chartInstance = null;
 
   const WMO = {
     0: ['ti-sun', 'Sereno'], 1: ['ti-sun', 'Prevalentemente sereno'], 2: ['ti-cloud', 'Parzialmente nuvoloso'],
@@ -220,7 +235,6 @@
 
   async function loadAll() {
     document.getElementById('hero-cond').textContent = 'Caricamento…';
-    document.getElementById('hourly-strip').innerHTML = '<p class="status">Caricamento dettaglio orario…</p>';
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
         `&current=temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_direction_10m` +
@@ -268,7 +282,6 @@
       renderDay(0);
     } catch (e) {
       document.getElementById('hero-cond').textContent = 'Dati non disponibili al momento';
-      document.getElementById('hourly-strip').innerHTML = '<p class="status">Dettaglio orario non disponibile.</p>';
     }
   }
 
@@ -301,17 +314,16 @@
     const endIdx = Math.min(startIdx + 24, times.length);
 
     const cols = [];
+    const chartLabels = [];
+    const chartTemps = [];
+    const chartRains = [];
     for (let i = startIdx; i < endIdx; i++) {
       const hh = times[i].slice(11, 16);
-      const [icon] = wmoInfo(codes[i]);
-      cols.push(`<div class="hour-col">
-        <span class="h-time">${hh}</span>
-        <i class="ti ${icon} h-icon" aria-hidden="true"></i>
-        <span class="h-temp">${Math.round(temps[i])}°</span>
-        <span class="h-rain ${rains[i] === 0 ? 'zero' : ''}">${rains[i]}%</span>
-      </div>`);
+      chartLabels.push(hh);
+      chartTemps.push(temps[i]);
+      chartRains.push(rains[i]);
     }
-    document.getElementById('hourly-strip').innerHTML = cols.join('');
+    drawChart(chartLabels, chartTemps, chartRains);
 
     // Neve prevista per il giorno selezionato (accumulo giornaliero)
     if (dailyFull && dailyFull.snowfall_sum) {
@@ -340,6 +352,30 @@
 
   // Al primo caricamento prova subito la posizione del dispositivo;
   // se non concessa o non disponibile, resta su Correggio (valore di default).
+  function drawChart(labels, temps, rains) {
+    const ctx = document.getElementById('tempChart');
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(ctx, {
+      data: {
+        labels: labels,
+        datasets: [
+          { type: 'line', label: 'Temperatura', data: temps, borderColor: '#0071e3', backgroundColor: 'rgba(0,113,227,0.08)', fill: true, borderWidth: 2, pointRadius: 0, yAxisID: 'y', tension: 0.35 },
+          { type: 'bar', label: 'Pioggia', data: rains, backgroundColor: 'rgba(0,113,227,0.15)', borderRadius: 4, yAxisID: 'y1', barPercentage: 0.5 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        scales: {
+          y: { position: 'left', ticks: { callback: v => v + '°', color: '#898781', font: { size: 11 } }, grid: { display: false } },
+          y1: { position: 'right', min: 0, max: 100, ticks: { callback: v => v + '%', color: '#898781', font: { size: 11 } }, grid: { display: false } },
+          x: { grid: { display: false }, ticks: { color: '#898781', font: { size: 10 }, maxTicksLimit: 8 } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
   useMyLocation();
   loadAll();
   setTimeout(() => location.reload(), 20 * 60 * 1000);
