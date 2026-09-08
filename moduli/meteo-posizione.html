@@ -13,7 +13,28 @@
     background: #f5f5f7;
     color: #1d1d1f;
     padding: 32px 16px 64px;
+    min-height: 100vh;
+    transition: background 1.2s ease;
+    background-attachment: fixed;
   }
+  body.wx-clear-day { background: linear-gradient(180deg, #4aa8ff 0%, #8fd0ff 45%, #d9f0ff 100%); }
+  body.wx-clear-night { background: linear-gradient(180deg, #0b1533 0%, #1c2b5e 55%, #33417a 100%); }
+  body.wx-cloudy-day { background: linear-gradient(180deg, #7c93a8 0%, #a9bac8 50%, #d6e0e8 100%); }
+  body.wx-cloudy-night { background: linear-gradient(180deg, #1a2230 0%, #2c3648 55%, #46536a 100%); }
+  body.wx-rain-day { background: linear-gradient(180deg, #4a5b6e 0%, #6c7f92 50%, #99a9b8 100%); }
+  body.wx-rain-night { background: linear-gradient(180deg, #10151d 0%, #232d3a 55%, #3a4756 100%); }
+  body.wx-snow-day { background: linear-gradient(180deg, #a9c4d6 0%, #cfe3ee 50%, #eef6fa 100%); }
+  body.wx-snow-night { background: linear-gradient(180deg, #1c2733 0%, #35485a 55%, #587489 100%); }
+  body.wx-fog-day { background: linear-gradient(180deg, #9aa3a8 0%, #c2c8cb 50%, #e2e5e6 100%); }
+  body.wx-fog-night { background: linear-gradient(180deg, #22262b 0%, #3b4147 55%, #5c6469 100%); }
+  body.wx-storm-day { background: linear-gradient(180deg, #3a3f52 0%, #545a72 50%, #7a8098 100%); }
+  body.wx-storm-night { background: linear-gradient(180deg, #0a0c14 0%, #1a1e2e 55%, #2e3448 100%); }
+  body[class^="wx-"] .place, body[class^="wx-"] .updated, body[class^="wx-"] .cond,
+  body[class^="wx-"] .hilo, body[class^="wx-"] h1, body[class^="wx-"] .back,
+  body[class^="wx-"] .geo-btn, body[class^="wx-"] .icon-big, body[class^="wx-"] .temp-big { color: #fff; }
+  body[class^="wx-"] .hilo b { color: #fff; }
+  body[class^="wx-"] .geo-btn { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.28); color: #fff; }
+  body[class^="wx-"] .geo-status { color: rgba(255,255,255,0.75); }
   .wrap { max-width: 760px; margin: 0 auto; }
   .back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: #0071e3; text-decoration: none; margin-bottom: 18px; }
   h1 { font-size: 13px; font-weight: 500; color: #6e6e73; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px; }
@@ -165,6 +186,22 @@
   };
   function wmoInfo(code) { return WMO[code] || ['ti-cloud', 'Variabile']; }
 
+  function weatherCategory(code) {
+    if ([0, 1].includes(code)) return 'clear';
+    if ([2, 3].includes(code)) return 'cloudy';
+    if ([45, 48].includes(code)) return 'fog';
+    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return 'rain';
+    if ([71, 73, 75].includes(code)) return 'snow';
+    if ([95, 96, 99].includes(code)) return 'storm';
+    return 'cloudy';
+  }
+
+  function applyBackground(code, isDay) {
+    const category = weatherCategory(code);
+    const period = isDay ? 'day' : 'night';
+    document.body.className = `wx-${category}-${period}`;
+  }
+
   const DAY_LABELS = ['Oggi', 'Domani', 'Dopodomani'];
 
   function useMyLocation() {
@@ -235,7 +272,7 @@
     document.getElementById('hero-cond').textContent = 'Caricamento…';
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
-        `&current=temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_direction_10m` +
+        `&current=temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_direction_10m,is_day` +
         `&hourly=temperature_2m,precipitation_probability,weather_code,uv_index,visibility` +
         `&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset,uv_index_max,snowfall_sum` +
         `&timezone=auto&forecast_days=3`;
@@ -245,6 +282,8 @@
 
       hourlyFull = d.hourly;
       dailyFull = d.daily;
+
+      applyBackground(d.current.weather_code, d.current.is_day);
 
       const [icon, text] = wmoInfo(d.current.weather_code);
       document.getElementById('hero-icon').className = 'ti ' + icon + ' icon-big';
