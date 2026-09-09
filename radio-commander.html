@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radio Commander</title>
+<style>
+  :root{
+    --bg-top:#eef1f5;
+    --bg-bottom:#dde2e9;
+    --card-bg: rgba(255,255,255,0.72);
+    --card-border: rgba(255,255,255,0.9);
+    --text-primary:#1c1c1e;
+    --text-secondary:#6e6e73;
+    --accent:#c0392b;
+    --accent-soft: rgba(192,57,43,0.12);
+    --shadow: 0 20px 50px rgba(30,30,40,0.14), 0 2px 8px rgba(30,30,40,0.06);
+    --radius-card: 28px;
+    --radius-control: 999px;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0;
+    padding:0;
+    height:100%;
+    background: radial-gradient(circle at 30% 20%, var(--bg-top), var(--bg-bottom) 70%);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    color: var(--text-primary);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .stage{
+    width:100%;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px;
+  }
+
+  .player{
+    width:340px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    padding: 32px 28px 28px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .player::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background: linear-gradient(150deg, rgba(255,255,255,0.5), rgba(255,255,255,0) 45%);
+    pointer-events:none;
+  }
+
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:0.02em;
+    color: var(--text-secondary);
+    margin:0 0 18px;
+  }
+
+  .station-row{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-bottom: 28px;
+  }
+
+  .logo{
+    width:64px;
+    height:64px;
+    border-radius:18px;
+    background:#ffffff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12), inset 0 0 0 1px rgba(0,0,0,0.04);
+    overflow:hidden;
+    flex-shrink:0;
+  }
+
+  .logo img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    padding:8px;
+  }
+
+  .station-info{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    min-width:0;
+  }
+
+  .station-name{
+    font-size:20px;
+    font-weight:600;
+    letter-spacing:-0.01em;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .station-status{
+    font-size:13px;
+    color: var(--text-secondary);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+
+  .live-dot{
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 0 rgba(192,57,43,0.5);
+    animation: pulse 2.2s infinite;
+  }
+
+  .live-dot.paused{
+    background: var(--text-secondary);
+    animation:none;
+    box-shadow:none;
+  }
+
+  @keyframes pulse{
+    0%{ box-shadow: 0 0 0 0 rgba(192,57,43,0.45); }
+    70%{ box-shadow: 0 0 0 8px rgba(192,57,43,0); }
+    100%{ box-shadow: 0 0 0 0 rgba(192,57,43,0); }
+  }
+
+  .transport{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:26px;
+  }
+
+  .play-btn{
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    border:none;
+    background: linear-gradient(180deg, #2a2a2c, #131314);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.15);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .play-btn:active{
+    transform: scale(0.94);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.15);
+  }
+
+  .play-btn svg{
+    width:26px;
+    height:26px;
+    fill:#fff;
+  }
+
+  .play-btn .icon-pause{ display:none; }
+  .play-btn.is-playing .icon-play{ display:none; }
+  .play-btn.is-playing .icon-pause{ display:block; }
+
+  .play-btn.loading{
+    opacity:0.6;
+    cursor:wait;
+  }
+
+  .volume-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+
+  .mute-btn{
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    border:none;
+    background: var(--accent-soft);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    flex-shrink:0;
+    transition: background 0.15s ease;
+  }
+
+  .mute-btn:hover{ background: rgba(192,57,43,0.2); }
+
+  .mute-btn svg{
+    width:17px;
+    height:17px;
+    fill: var(--accent);
+  }
+
+  .volume-track{
+    flex:1;
+    position:relative;
+    height:6px;
+  }
+
+  input[type="range"]{
+    -webkit-appearance:none;
+    appearance:none;
+    width:100%;
+    height:6px;
+    border-radius:3px;
+    background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--fill,70%), rgba(0,0,0,0.08) var(--fill,70%), rgba(0,0,0,0.08) 100%);
+    outline:none;
+    cursor:pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(0,0,0,0.05);
+    cursor:pointer;
+    margin-top:0;
+  }
+
+  input[type="range"]::-moz-range-thumb{
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#fff;
+    border:none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(0,0,0,0.05);
+    cursor:pointer;
+  }
+
+  .fallback-link{
+    display:block;
+    margin-top:22px;
+    text-align:center;
+    font-size:12px;
+    color: var(--text-secondary);
+    text-decoration:none;
+  }
+
+  .fallback-link:hover{ color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="player">
+    <p class="eyebrow">Radio Commander</p>
+
+    <div class="station-row">
+      <div class="logo">
+        <img src="https://www.radioradicale.it/sites/all/themes/radioradicale_2014/images/logo2015_152.png" alt="Radio Radicale">
+      </div>
+      <div class="station-info">
+        <div class="station-name">Radio Radicale</div>
+        <div class="station-status">
+          <span class="live-dot paused" id="liveDot"></span>
+          <span id="statusText">In pausa</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="transport">
+      <button class="play-btn" id="playBtn" aria-label="Play/Pausa">
+        <svg class="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+      </button>
+    </div>
+
+    <div class="volume-row">
+      <button class="mute-btn" id="muteBtn" aria-label="Muto">
+        <svg id="volIcon" viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2c0-1.77-.77-3.29-2-4.36v8.72c1.23-1.07 2-2.59 2-4.36z"/></svg>
+      </button>
+      <div class="volume-track">
+        <input type="range" id="volumeSlider" min="0" max="100" value="70">
+      </div>
+    </div>
+
+    <a class="fallback-link" href="http://livemp3.radioradicale.it/live.mp3" target="_blank" rel="noopener">Se non parte, apri lo stream direttamente</a>
+  </div>
+</div>
+
+<audio id="audio" preload="none">
+  <source src="http://livemp3.radioradicale.it/live.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+  const audio = document.getElementById('audio');
+  const playBtn = document.getElementById('playBtn');
+  const liveDot = document.getElementById('liveDot');
+  const statusText = document.getElementById('statusText');
+  const muteBtn = document.getElementById('muteBtn');
+  const volIcon = document.getElementById('volIcon');
+  const volumeSlider = document.getElementById('volumeSlider');
+
+  const ICON_VOLUME = '<path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2c0-1.77-.77-3.29-2-4.36v8.72c1.23-1.07 2-2.59 2-4.36z"/>';
+  const ICON_MUTE = '<path d="M16.5 12c0-1.77-.77-3.29-2-4.36v2.73l1.88 1.88c.08-.4.12-.81.12-1.25zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.8L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
+
+  audio.volume = 0.7;
+  let previousVolume = 0.7;
+  let isLoading = false;
+
+  function setStatus(playing, loading){
+    liveDot.classList.toggle('paused', !playing);
+    playBtn.classList.toggle('is-playing', playing);
+    playBtn.classList.toggle('loading', loading);
+    statusText.textContent = loading ? 'Connessione…' : (playing ? 'In diretta' : 'In pausa');
+  }
+
+  playBtn.addEventListener('click', async () => {
+    if (isLoading) return;
+    if (audio.paused){
+      isLoading = true;
+      setStatus(false, true);
+      try{
+        await audio.play();
+        setStatus(true, false);
+      }catch(e){
+        setStatus(false, false);
+        statusText.textContent = 'Impossibile avviare';
+      }
+      isLoading = false;
+    } else {
+      audio.pause();
+      setStatus(false, false);
+    }
+  });
+
+  audio.addEventListener('waiting', () => setStatus(!audio.paused, true));
+  audio.addEventListener('playing', () => setStatus(true, false));
+  audio.addEventListener('pause', () => setStatus(false, false));
+  audio.addEventListener('error', () => {
+    setStatus(false, false);
+    statusText.textContent = 'Stream non disponibile';
+  });
+
+  function updateVolumeUI(vol, muted){
+    const pct = muted ? 0 : Math.round(vol * 100);
+    volumeSlider.value = pct;
+    volumeSlider.style.setProperty('--fill', pct + '%');
+    volIcon.innerHTML = (muted || vol === 0) ? ICON_MUTE : ICON_VOLUME;
+  }
+
+  volumeSlider.addEventListener('input', (e) => {
+    const val = Number(e.target.value) / 100;
+    audio.muted = false;
+    audio.volume = val;
+    previousVolume = val > 0 ? val : previousVolume;
+    updateVolumeUI(val, false);
+  });
+
+  muteBtn.addEventListener('click', () => {
+    audio.muted = !audio.muted;
+    updateVolumeUI(audio.muted ? 0 : (audio.volume || previousVolume), audio.muted);
+  });
+
+  updateVolumeUI(audio.volume, audio.muted);
+</script>
+
+</body>
+</html>
