@@ -41,7 +41,10 @@
     box-shadow: 0 10px 30px rgba(0,0,0,0.22);
   }
 
-  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 14px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+  @media (max-width: 640px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
   .stat-card {
     background: #fff;
     border-radius: 28px; border: 0.5px solid rgba(0,0,0,0.06); padding: 16px 18px;
@@ -63,6 +66,22 @@
   .icon-pressure { background: #8e8e93; }
   .icon-visibility { background: #5ac8fa; }
   .icon-snow { background: #64d2ff; }
+  .icon-risk { background: #ff9500; }
+
+  .stat-card.wide { grid-column: span 2; }
+  .sun-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .sun-sep { width: 1px; height: 18px; background: rgba(0,0,0,0.1); }
+  .risk-bar-wrap { margin-top: 8px; }
+  .risk-bar {
+    position: relative; height: 10px; border-radius: 6px;
+    background: linear-gradient(90deg, #34c759 0%, #ffcc00 50%, #ff3b30 100%);
+  }
+  .risk-marker {
+    position: absolute; top: -3px; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; border: 3px solid #1d1d1f; transform: translateX(-50%);
+    transition: left 0.6s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  }
+  .risk-label-row { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: #86868b; }
   .stat-card .icon-badge svg { display: block; }
   .stat-card .s-value { font-size: 20px; font-weight: 600; margin: 0; }
   .stat-card .s-sub { font-size: 12px; color: #86868b; margin: 2px 0 0; }
@@ -129,14 +148,41 @@
 
   <div class="stats-grid" id="stats-grid">
     <div class="stat-card"><p class="s-label"><span class="icon-badge icon-uv"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><line x1="12" y1="1.5" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22.5" y2="12"/><line x1="4.5" y1="4.5" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.5" y2="19.5"/><line x1="4.5" y1="19.5" x2="6.3" y2="17.7"/><line x1="17.7" y1="6.3" x2="19.5" y2="4.5"/></svg></span>Indice UV</p><p class="s-value" id="stat-uv">&hellip;</p></div>
-    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-sunrise"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4"/><path d="M5.6 8.6l1.8 1.8"/><path d="M16.6 8.6l-1.8 1.8"/><path d="M3 14h2.5"/><path d="M18.5 14H21"/><path d="M6 18h12"/><path d="M8 14a4 4 0 0 1 8 0"/><path d="M2 21h20"/></svg></span>Alba</p><p class="s-value" id="stat-sunrise">&hellip;</p></div>
-    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-sunset"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10V6"/><path d="M5.6 8.6l1.8 1.8"/><path d="M16.6 8.6l-1.8 1.8"/><path d="M3 14h2.5"/><path d="M18.5 14H21"/><path d="M6 18h12"/><path d="M8 14a4 4 0 0 1 8 0"/><path d="M2 21h20"/></svg></span>Tramonto</p><p class="s-value" id="stat-sunset">&hellip;</p></div>
+    <div class="stat-card">
+      <p class="s-label"><span class="icon-badge icon-sunrise"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4"/><path d="M5.6 8.6l1.8 1.8"/><path d="M16.6 8.6l-1.8 1.8"/><path d="M3 14h2.5"/><path d="M18.5 14H21"/><path d="M6 18h12"/><path d="M8 14a4 4 0 0 1 8 0"/><path d="M2 21h20"/></svg></span>Alba &middot; Tramonto</p>
+      <div class="sun-row">
+        <div><p class="s-value" id="stat-sunrise" style="font-size:16px;">&hellip;</p></div>
+        <div class="sun-sep"></div>
+        <div><p class="s-value" id="stat-sunset" style="font-size:16px;">&hellip;</p></div>
+      </div>
+    </div>
     <div class="stat-card"><p class="s-label"><span class="icon-badge icon-wind"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9.5h11a2.8 2.8 0 1 0-2.8-2.8"/><path d="M2.5 14.5h15.5a2.8 2.8 0 1 1-2.8 2.8"/><path d="M2.5 19h9a2.2 2.2 0 1 0-2.2-2.2"/></svg></span>Vento</p><p class="s-value" id="stat-wind">&hellip;</p><p class="s-sub" id="stat-wind-dir"></p></div>
     <div class="stat-card"><p class="s-label"><span class="icon-badge icon-moon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 12.5a7.5 7.5 0 0 1-9.9-9.9 8 8 0 1 0 9.9 9.9z"/><circle cx="19" cy="5" r="0.6" fill="currentColor" stroke="none"/><circle cx="20.5" cy="8.5" r="0.4" fill="currentColor" stroke="none"/></svg></span>Fase lunare</p><p class="s-value" id="stat-moon" style="font-size:15px;">&hellip;</p></div>
-    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-humidity"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c3 4 6.5 8.2 6.5 12A6.5 6.5 0 0 1 5.5 14.5c0-3.8 3.5-8 6.5-12z"/><path d="M9.3 15.5a2.7 2.7 0 0 0 2.7 2.7"/></svg></span>Umidit&agrave;</p><p class="s-value" id="stat-humidity">&hellip;</p></div>
-    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-pressure"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 13l3.2-3.2"/><path d="M9 4.5h6"/></svg></span>Pressione</p><p class="s-value" id="stat-pressure">&hellip;</p></div>
-    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-visibility"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9c1.8-1.8 3.8-2.7 6-2.7"/><path d="M2 12.5c2.5-2.2 5-3.3 10-3.3s7.5 1.1 10 3.3"/><path d="M2 16c3.2-1.3 6.2-2 10-2s6.8.7 10 2"/></svg></span>Visibilit&agrave;</p><p class="s-value" id="stat-visibility">&hellip;</p><p class="s-sub" id="stat-fog-note"></p></div>
-    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-snow"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2.5" x2="12" y2="21.5"/><line x1="4" y1="7.2" x2="20" y2="16.8"/><line x1="20" y1="7.2" x2="4" y2="16.8"/><path d="M12 2.5l-1.6 1.8M12 2.5l1.6 1.8"/><path d="M12 21.5l-1.6-1.8M12 21.5l1.6-1.8"/><path d="M4 7.2l2.3.4M4 7.2l.6-2.2"/><path d="M20 16.8l-2.3-.4M20 16.8l-.6 2.2"/><path d="M20 7.2l-2.3.4M20 7.2l-.6-2.2"/><path d="M4 16.8l2.3-.4M4 16.8l.6 2.2"/></svg></span>Neve prevista</p><p class="s-value" id="stat-snow">&hellip;</p><p class="s-sub" id="stat-snow-sub"></p></div>
+    <div class="stat-card">
+      <p class="s-label"><span class="icon-badge icon-humidity"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c3 4 6.5 8.2 6.5 12A6.5 6.5 0 0 1 5.5 14.5c0-3.8 3.5-8 6.5-12z"/><path d="M9.3 15.5a2.7 2.7 0 0 0 2.7 2.7"/></svg></span>Umidit&agrave; &middot; Pressione</p>
+      <div class="sun-row">
+        <div><p class="s-value" id="stat-humidity" style="font-size:16px;">&hellip;</p></div>
+        <div class="sun-sep"></div>
+        <div><p class="s-value" id="stat-pressure" style="font-size:16px;">&hellip;</p></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <p class="s-label"><span class="icon-badge icon-visibility"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9c1.8-1.8 3.8-2.7 6-2.7"/><path d="M2 12.5c2.5-2.2 5-3.3 10-3.3s7.5 1.1 10 3.3"/><path d="M2 16c3.2-1.3 6.2-2 10-2s6.8.7 10 2"/></svg></span>Visibilit&agrave; &middot; Neve</p>
+      <div class="sun-row">
+        <div><p class="s-value" id="stat-visibility" style="font-size:16px;">&hellip;</p><p class="s-sub" id="stat-fog-note"></p></div>
+        <div class="sun-sep"></div>
+        <div><p class="s-value" id="stat-snow" style="font-size:16px;">&hellip;</p><p class="s-sub" id="stat-snow-sub"></p></div>
+      </div>
+    </div>
+    <div class="stat-card wide">
+      <p class="s-label"><span class="icon-badge icon-risk"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 17a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.6 9.5a4 4 0 0 1-.6 7.5H6.5z"/><path d="M13 12l-2.5 3.5H13L10.5 19"/></svg></span>Rischio temporali &middot; grandine</p>
+      <p class="s-value" id="risk-label">&hellip;</p>
+      <div class="risk-bar-wrap">
+        <div class="risk-bar"><div class="risk-marker" id="risk-marker" style="left:0%;"></div></div>
+        <div class="risk-label-row"><span>Basso</span><span>Moderato</span><span>Alto</span></div>
+      </div>
+      <p class="s-sub" id="risk-sub" style="margin-top:8px;"></p>
+    </div>
   </div>
 
   <div class="radar-embed">
@@ -236,7 +282,7 @@
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
         `&current=temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_direction_10m` +
-        `&hourly=temperature_2m,precipitation_probability,weather_code,uv_index,visibility` +
+        `&hourly=temperature_2m,precipitation_probability,weather_code,uv_index,visibility,cape,wind_gusts_10m` +
         `&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset,uv_index_max,snowfall_sum` +
         `&timezone=auto&forecast_days=3`;
       const res = await fetch(url);
@@ -350,6 +396,29 @@
         document.getElementById('stat-visibility').textContent = visKm.toFixed(1) + ' km';
         document.getElementById('stat-fog-note').textContent = visKm < 1 ? 'Nebbia fitta' : (visKm < 4 ? 'Foschia/nebbia possibile' : '');
       }
+    }
+    // Rischio temporali/grandine per il giorno selezionato:
+    // combina CAPE massimo (instabilità), raffiche di vento massime,
+    // e presenza del codice meteo che indica esplicitamente grandine (96/99).
+    if (hourlyFull.cape) {
+      const capeSlice = hourlyFull.cape.slice(startIdx, endIdx).filter(v => v != null);
+      const gustSlice = (hourlyFull.wind_gusts_10m || []).slice(startIdx, endIdx).filter(v => v != null);
+      const maxCape = capeSlice.length ? Math.max(...capeSlice) : 0;
+      const maxGust = gustSlice.length ? Math.max(...gustSlice) : 0;
+      const hasHailCode = codes.slice(startIdx, endIdx).some(c => c === 96 || c === 99);
+
+      let score = Math.min(maxCape / 2500, 1) * 60 + Math.min(maxGust / 70, 1) * 20;
+      if (hasHailCode) score += 20;
+      score = Math.min(score, 100);
+
+      let label, sub;
+      if (score < 30) { label = 'Basso'; sub = 'Nessun segnale rilevante nei dati odierni.'; }
+      else if (score < 60) { label = 'Moderato'; sub = 'Atmosfera instabile: possibili rovesci o temporali.'; }
+      else { label = 'Alto'; sub = hasHailCode ? 'Condizioni favorevoli a temporali forti, possibile grandine.' : 'Forte instabilità atmosferica: temporali probabili.'; }
+
+      document.getElementById('risk-label').textContent = label;
+      document.getElementById('risk-sub').textContent = sub;
+      document.getElementById('risk-marker').style.left = score + '%';
     }
   }
 
