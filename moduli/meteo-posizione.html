@@ -3,59 +3,247 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#f5f5f7">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('meteo-theme')==='dark'?'dark':'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
 <title>Meteo - La mia posizione</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
 <style>
   * { box-sizing: border-box; }
+
+  /* ---------- Tokens (light + dark) ---------- */
+  :root {
+    color-scheme: light;
+    --bg: #f5f5f7;
+    --surface: #fff;
+    --text: #1d1d1f;
+    --text-2: #6e6e73;
+    --text-3: #86868b;
+    --text-4: #a1a1a6;
+    --blue: #0071e3;
+    --hairline: rgba(0,0,0,0.06);
+    --sep: rgba(0,0,0,0.1);
+    --seg: rgba(118,118,128,0.12);
+    --thumb: #fff;
+    --nav-bg: rgba(245,245,247,0.72);
+    --dot-fill: #fff;
+    --dot-ring: #1d1d1f;
+    --moon-dark: #3a3a3c;
+    --dial-a: #d9d9de;
+    --dial-b: #8e8e93;
+    --hill-3: #cfd9e3;
+    --hill-2: #a9b9c9;
+    --hill-1: #7f95ab;
+    --moon-lit: #f3ecd2;
+    /* piccole superfici = ombra corta; grandi superfici = più spessore */
+    --shadow-sm: 0 6px 20px rgba(0,0,0,0.14);   /* riquadri piccoli: ombra più corta */
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.22);  /* grafico e radar: come nell'originale */
+  }
+  :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #000;
+      --surface: #1c1c1e;
+      --text: #f5f5f7;
+      --text-2: #a1a1a6;
+      --text-3: #8e8e93;
+      --text-4: #636366;
+      --blue: #0a84ff;
+      --hairline: rgba(255,255,255,0.1);
+      --sep: rgba(255,255,255,0.14);
+      --seg: rgba(118,118,128,0.24);
+      --thumb: #636366;
+      --nav-bg: rgba(0,0,0,0.6);
+      --dot-fill: #1c1c1e;
+      --dot-ring: #f5f5f7;
+      --moon-dark: #2c2c2e;
+      --dial-a: #48484a;
+      --dial-b: #a1a1a6;
+      --hill-3: #2b3642;
+      --hill-2: #394857;
+      --hill-1: #4d6075;
+      --shadow-sm: 0 6px 20px rgba(0,0,0,0.45);
+      --shadow-lg: 0 10px 30px rgba(0,0,0,0.6);
+  }
+
+  /* ---------- Base ---------- */
+  html { font-size: 100%; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-    background: #f5f5f7;
-    color: #1d1d1f;
-    padding: 32px 16px 64px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    font-optical-sizing: auto;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    background: var(--bg);
+    color: var(--text);
+    transition: background-color 0.4s ease, color 0.4s ease; /* cambio tema dolce, mai un lampo */
   }
-  .wrap { max-width: 760px; margin: 0 auto; }
-  .back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: #0071e3; text-decoration: none; margin-bottom: 18px; }
-  h1 { font-size: 13px; font-weight: 500; color: #6e6e73; text-transform: uppercase; letter-spacing: 0.04em; margin: 0 0 6px; }
-  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 8px 16px 64px; }
+
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 8px; }
+
+  /* ---------- Barra superiore: materiale traslucido, il contenuto scorre sotto ---------- */
+  .nav { position: sticky; top: 0; z-index: 20; padding: 10px 16px; }
+  .nav::before {
+    content: ''; position: absolute; inset: 0 0 -16px 0; z-index: -1; pointer-events: none;
+    background: var(--nav-bg);
+    -webkit-backdrop-filter: blur(0) saturate(100%);
+    backdrop-filter: blur(0) saturate(100%);
+    /* scroll-edge effect: niente linea da 1px, il bordo sfuma */
+    -webkit-mask-image: linear-gradient(#000 calc(100% - 16px), transparent);
+    mask-image: linear-gradient(#000 calc(100% - 16px), transparent);
+    /* il vetro "si materializza": sfocatura, scala e opacità insieme, non una semplice dissolvenza */
+    opacity: 0; transform: scaleY(0.88); transform-origin: top;
+    transition: opacity 0.3s ease,
+                transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                -webkit-backdrop-filter 0.45s ease,
+                backdrop-filter 0.45s ease;
+  }
+  .nav.scrolled::before {
+    opacity: 1; transform: none;
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+  }
+  .nav-inner { max-width: 760px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+
+  .back {
+    position: relative; display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.8125rem; font-weight: 500; letter-spacing: 0.01em; color: var(--blue); text-decoration: none;
+    transition: opacity 0.3s ease;
+  }
+  .back::after { content: ''; position: absolute; inset: -10px -8px; } /* area di tocco più ampia */
+  .back:active { opacity: 0.45; transition-duration: 0.08s; }
+
   .geo-btn {
-    font-family: inherit; font-size: 12px; font-weight: 500; color: #0071e3;
-    background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 980px;
-    padding: 6px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+    position: relative;
+    font-family: inherit; font-size: 0.75rem; font-weight: 500; color: var(--blue);
+    background: var(--surface); border: 1px solid var(--hairline); border-radius: 980px;
+    padding: 0.4rem 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.4s ease;
+    -webkit-tap-highlight-color: transparent;
   }
-  .geo-status { font-size: 12px; color: #86868b; margin: 6px 0 18px; min-height: 14px; }
+  .geo-btn::after { content: ''; position: absolute; inset: -8px; }
+  /* il feedback vive sulla pressione, non sul rilascio */
+  .geo-btn:active { transform: scale(0.95); transition-duration: 0.08s; }
 
-  .hero { text-align: center; margin: 8px 0 22px; }
-  .hero .place { font-size: 21px; font-weight: 600; margin: 0; }
-  .hero .updated { font-size: 12px; color: #86868b; margin: 2px 0 0; }
-  .hero .icon-big { font-size: 64px; color: #6e6e73; margin: 10px 0 0; display: block; }
-  .hero .temp-big { font-size: 68px; font-weight: 300; margin: 0; line-height: 1; letter-spacing: -0.02em; }
-  .hero .cond { font-size: 16px; color: #6e6e73; margin: 4px 0 0; }
-  .hero .hilo { font-size: 15px; color: #6e6e73; margin: 4px 0 0; }
-  .hero .hilo b { color: #1d1d1f; font-weight: 600; }
+  .geo-status { font-size: 0.75rem; color: var(--text-3); margin: 6px 0 14px; min-height: 1.1rem; line-height: 1.4; }
 
+
+  /* ---------- Selettore tema ---------- */
+  .nav-actions { display: flex; align-items: center; gap: 8px; }
+  .theme-seg {
+    position: relative; display: inline-flex; padding: 2px; border-radius: 980px;
+    background: var(--seg); transition: background-color 0.4s ease;
+  }
+  .theme-thumb {
+    position: absolute; top: 2px; bottom: 2px; left: 2px; width: calc((100% - 4px) / 2);
+    border-radius: 980px; background: var(--thumb); box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    will-change: transform;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.4s ease; /* fallback */
+    transition: transform 0.75s linear(0, 0.069, 0.212, 0.368, 0.511, 0.631, 0.727, 0.801, 0.856, 0.897, 0.927, 0.949, 0.964, 0.975, 0.983, 0.988, 0.992, 0.994, 0.996, 0.997, 0.998, 0.999, 1), background-color 0.4s ease;
+  }
+  .theme-seg[data-active="dark"] .theme-thumb { transform: translateX(100%); }
+  .theme-opt {
+    position: relative; z-index: 1; width: 2rem; height: 1.75rem; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 1rem; line-height: 1; color: var(--text-2);
+    background: none; border: 0; border-radius: 980px; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.25s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .theme-opt[aria-checked="true"] { color: var(--text); }
+  .theme-opt:active { transform: scale(0.92); transition-duration: 0.08s; }
+  .theme-opt:focus-visible { outline-offset: 0; }
+  @media (max-width: 420px) { .geo-label { display: none; } .geo-btn { padding: 0.4rem 0.6rem; } }
+
+  /* ---------- Hero ---------- */
+  .hero { text-align: center; margin: 4px 0 22px; }
+  .hero .place { font-size: 1.3rem; font-weight: 600; line-height: 1.25; letter-spacing: -0.01em; margin: 0; }
+  .hero .updated { font-size: 0.75rem; color: var(--text-3); margin: 2px 0 0; letter-spacing: 0.01em; }
+  .hero .icon-big { font-size: 4rem; line-height: 1; color: var(--text-2); margin: 12px 0 0; display: block; }
+  .hero .temp-big {
+    font-size: clamp(4rem, 15vw, 5.5rem); font-weight: 300; margin: 4px 0 0;
+    line-height: 1; letter-spacing: -0.035em; /* testo grande = tracking negativo */
+  }
+  .hero .cond { font-size: 1rem; color: var(--text-2); margin: 8px 0 0; line-height: 1.3; }
+  .hero .hilo { font-size: 0.9375rem; color: var(--text-2); margin: 4px 0 0; line-height: 1.3; }
+  .hero .hilo b { color: var(--text); font-weight: 600; }
+
+  /* Previsione sintetica: sempre visibile (niente tooltip: su touch non esisterebbe) */
+  .forecast {
+    max-width: 34rem; margin: 14px auto 0; font-size: 0.9375rem; line-height: 1.45;
+    color: var(--text-2); text-wrap: balance; letter-spacing: 0.005em;
+  }
+  .forecast:empty { display: none; }
+  .forecast strong { color: var(--text); font-weight: 600; }
+  .forecast.fade-in { animation: fcIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  @keyframes fcIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- Selettore giorni (segmented control con pill che scorre) ---------- */
   .card-panel {
-    background: rgba(255,255,255,0.72); backdrop-filter: blur(20px);
-    border-radius: 32px; border: 0.5px solid rgba(0,0,0,0.06);
-    padding: 14px 6px; margin-bottom: 14px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+    background: var(--seg); border-radius: 28px; padding: 4px; margin-bottom: 14px;
+    transition: background-color 0.4s ease;
   }
+  .days-row { position: relative; }
+  .day-pill {
+    position: absolute; top: 0; bottom: 0; left: 0; width: calc(100% / 3);
+    border-radius: 24px; background: var(--thumb); box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    will-change: transform; transition: background-color 0.4s ease;
+  }
+  .days-tabs { position: relative; z-index: 1; display: flex; min-height: 5.3rem; }
+  .day-tab {
+    flex: 1; min-width: 0; text-align: center; padding: 0.625rem 0.25rem; border-radius: 24px;
+    cursor: pointer; font: inherit; font-size: 0.75rem; color: var(--text-2);
+    background: none; border: 0; -webkit-tap-highlight-color: transparent;
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .day-tab:active { transform: scale(0.96); transition-duration: 0.08s; }
+  .day-tab:focus-visible { outline-offset: -2px; }
+  .day-tab .dname { font-weight: 600; font-size: 0.75rem; line-height: 1.3; margin-bottom: 0.25rem; color: var(--text); transition: color 0.25s ease; }
+  .day-tab.active .dname { color: var(--blue); }
+  .day-tab i { font-size: 1.25rem; line-height: 1.2; color: var(--text-2); display: block; margin: 0.25rem 0; }
+  .day-tab .drange { font-size: 0.6875rem; line-height: 1.3; color: var(--text-3); letter-spacing: 0.01em; }
+  .day-tab .drange b { color: var(--text); font-weight: 600; }
 
-  .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 14px; }
-  @media (max-width: 640px) {
-    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  /* ---------- Grafico: scorrevole con swipe ---------- */
+  .chart-panel {
+    position: relative; overflow: hidden; touch-action: pan-y;
+    -webkit-user-select: none; user-select: none; cursor: grab;
+    background: var(--surface); border-radius: 32px; border: 0;
+    padding: 16px 14px; margin-bottom: 14px; box-shadow: var(--shadow-lg);
+    transition: background-color 0.4s ease;
+  }
+  .chart-panel.dragging { cursor: grabbing; }
+  .chart-slider { will-change: transform, opacity; }
+  .chart-panel .ctitle { font-size: 0.8125rem; font-weight: 600; line-height: 1.3; margin: 0 0 10px; text-align: center; }
+  .chart-panel .ctitle span { color: var(--text-3); font-weight: 500; }
+  .chart-wrap { position: relative; width: 100%; height: 220px; }
+
+  /* ---------- Card statistiche ---------- */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  @media (max-width: 640px), (max-height: 500px) and (orientation: landscape) {
+    .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .stat-card { padding: 14px 12px; border-radius: 24px; }
+    .sun-row { gap: 6px; }
+    /* telefono: la pressione va in fondo; aperta (9 riquadri, dispari) occupa tutta la riga */
+    .pressure-card { order: 1; }
+    .stats-grid.expanded .pressure-card { grid-column: 1 / -1; }
   }
   .stat-card {
-    background: #fff;
-    border-radius: 28px; border: 0.5px solid rgba(0,0,0,0.06); padding: 16px 18px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+    background: var(--surface); text-align: center;
+    border-radius: 28px; border: 0; padding: 16px 18px;
+    box-shadow: var(--shadow-sm); transition: background-color 0.4s ease;
+    min-width: 0; overflow: hidden;
+    display: flex; flex-direction: column; justify-content: center;
   }
-  .stat-card { text-align: center; }
-  .stat-card .s-label { font-size: 11px; color: #86868b; text-transform: uppercase; letter-spacing: 0.03em; margin: 0 0 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .stat-card .s-label {
+    font-size: 0.6875rem; line-height: 1.3; color: var(--text-3); text-transform: uppercase;
+    letter-spacing: 0.04em; margin: 0 0 10px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
   .stat-card .icon-badge {
     width: 26px; height: 26px; border-radius: 8px; flex: 0 0 auto;
-    display: flex; align-items: center; justify-content: center;
-    color: #fff;
+    display: flex; align-items: center; justify-content: center; color: #fff;
   }
   .icon-uv { background: #ff9500; }
   .icon-sunrise { background: #ffcc00; }
@@ -69,63 +257,237 @@
   .icon-risk { background: #ff9500; }
   .icon-air { background: #30b0c7; }
 
-  .stat-card.wide { grid-column: span 2; }
-  .sun-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
-  .sun-sep { width: 1px; height: 18px; background: rgba(0,0,0,0.1); }
-  .risk-bar-wrap { margin-top: 8px; }
-  .risk-bar {
-    position: relative; height: 10px; border-radius: 6px;
-    background: linear-gradient(90deg, #34c759 0%, #ffcc00 50%, #ff3b30 100%);
-  }
-  .risk-marker {
-    position: absolute; top: -3px; width: 16px; height: 16px; border-radius: 50%;
-    background: #fff; border: 3px solid #1d1d1f; transform: translateX(-50%);
-    transition: left 0.6s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-  }
-  .risk-label-row { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: #86868b; }
-  .stat-card .icon-badge svg { display: block; }
-  .stat-card .s-value { font-size: 20px; font-weight: 600; margin: 0; }
-  .stat-card .s-sub { font-size: 12px; color: #86868b; margin: 2px 0 0; }
+  .stat-card[hidden], .more-wrap[hidden] { display: none; }
 
+  /* Pressione: la tendenza è il messaggio (parola + freccia + colore), la linea la spiega.
+     Linea piccola e sottile; solo le ultime 3 ore hanno colore, il resto è grigio. */
+  .pressure-card { --trend: var(--text-3); }
+  .pressure-card[data-trend="down"] { --trend: #ff9500; }
+  .pressure-card[data-trend="up"] { --trend: var(--blue); }
+  .pressure-trend {
+    display: flex; align-items: center; justify-content: center; gap: 4px; margin: 2px 0 0;
+    font-size: 0.8125rem; font-weight: 600; line-height: 1.3; color: var(--trend);
+  }
+  .pressure-card[data-trend="flat"] .pressure-trend { color: var(--text-2); }
+  .pressure-card .pressure-trend { margin-top: 6px; }
+  .pressure-trend + .gauge-foot { margin-top: 2px; }
+  .pressure-card:not([data-trend="flat"]) .gauge-dot { border-color: var(--trend); }  /* il pallino prende il colore della tendenza */
+  .card-enter { animation: cardIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) var(--d, 0ms) both; }
+  .card-enter { animation-timing-function: linear(0, 0.069, 0.212, 0.368, 0.511, 0.631, 0.727, 0.801, 0.856, 0.897, 0.927, 0.949, 0.964, 0.975, 0.983, 0.988, 0.992, 0.994, 0.996, 0.997, 0.998, 0.999, 1); animation-duration: 0.75s; }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: none; } }
+
+  .more-wrap { display: flex; justify-content: center; margin: 0 0 18px; }
+  .more-btn {
+    position: relative; font-family: inherit; font-size: 0.75rem; font-weight: 500; color: var(--blue);
+    background: var(--surface); border: 0; border-radius: 980px; padding: 0.45rem 0.9rem; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 5px; box-shadow: var(--shadow-sm);
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.4s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .more-btn::after { content: ''; position: absolute; inset: -8px; }
+  .more-btn:active { transform: scale(0.95); transition-duration: 0.08s; }
+  .more-btn i { transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+  .more-btn[aria-expanded="true"] i { transform: rotate(180deg); }
+  .stat-card .icon-badge svg { display: block; }
+  .stat-card .s-value { font-size: 1.25rem; font-weight: 600; line-height: 1.25; letter-spacing: -0.01em; margin: 0; }
+  .stat-card .s-value[data-size="sm"] { font-size: 1rem; }
+  .stat-card .s-value[data-size="xs"] { font-size: 0.9375rem; }
+  .stat-card .s-sub { font-size: 0.75rem; line-height: 1.35; color: var(--text-3); margin: 2px 0 0; letter-spacing: 0.01em; }
+  .sun-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .sun-sep { width: 1px; height: 18px; background: var(--sep); }
+
+  /* Indicatori circolari (qualità dell'aria, rischio temporali):
+     anello a 270° con il gradiente originale; il pallino ruota con transform e curva a molla smorzata */
+  .gauge { position: relative; width: min(100%, 7rem); aspect-ratio: 1; margin: 2px auto 0; }
+  .gauge-arc {
+    position: absolute; inset: 0; border-radius: 50%;
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 11px), #000 calc(100% - 10.5px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 11px), #000 calc(100% - 10.5px));
+  }
+  .gauge-risk .gauge-arc { background: conic-gradient(from 225deg, #34c759 0deg, #ffcc00 135deg, #ff3b30 270deg, transparent 270.2deg); }
+  .gauge-aqi .gauge-arc { background: conic-gradient(from 225deg, #34c759 0deg, #ffcc00 94.5deg, #ff9500 175.5deg, #ff3b30 270deg, transparent 270.2deg); }
+  .gauge-uv .gauge-arc { background: conic-gradient(from 225deg, #34c759 0deg, #ffcc00 90deg, #ff9500 150deg, #ff3b30 215deg, #af52de 270deg, transparent 270.2deg); }
+  .gauge-hum .gauge-arc { background: conic-gradient(from 225deg, #ff9500 0deg, #ffcc00 54deg, #34c759 135deg, #5ac8fa 210deg, #0a84ff 270deg, transparent 270.2deg); }
+
+  /* riga a piè di riquadro (fascia di protezione UV, direzione e raffiche del vento) */
+  .gauge-foot { font-size: 0.6875rem; line-height: 1.35; color: var(--text-3); margin: 8px 0 0; letter-spacing: 0.01em; text-align: center; }
+  .gauge-foot b { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-2); }
+  .gauge-foot span { display: block; }
+
+  /* Bussola del vento: la freccia sul bordo indica DA DOVE arriva il vento (punta verso il centro) */
+  .compass { position: relative; width: min(100%, 7rem); aspect-ratio: 1; margin: 2px auto 0; }
+  .compass-face { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .compass-face .tick { stroke: var(--text-4); stroke-width: 1.2; stroke-linecap: round; }
+  .compass-face .tick.major { stroke: var(--text-3); stroke-width: 1.8; }
+  .compass-face text { font: 600 9px system-ui, -apple-system, "SF Pro Text", "Segoe UI", sans-serif; fill: var(--text-3); text-anchor: middle; dominant-baseline: central; }
+  .compass-face text.north { fill: #ff3b30; }
+  .compass-arrow {
+    position: absolute; inset: 0; pointer-events: none; will-change: transform;
+    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); /* fallback */
+    transition: transform 0.75s linear(0, 0.069, 0.212, 0.368, 0.511, 0.631, 0.727, 0.801, 0.856, 0.897, 0.927, 0.949, 0.964, 0.975, 0.983, 0.988, 0.992, 0.994, 0.996, 0.997, 0.998, 0.999, 1);
+  }
+  .compass-arrow svg { display: block; width: 100%; height: 100%; }
+  .compass-arrow path { fill: var(--blue); stroke: var(--blue); stroke-width: 3; stroke-linejoin: round; }
+  .compass .gauge-center .s-value { font-size: 1.25rem; }
+
+  /* Luna: disco con la parte illuminata disegnata davvero (vista dall'emisfero nord) */
+  .moon { display: block; margin: 4px auto 6px; }
+  .moon-dark { fill: var(--moon-dark); transition: fill 0.4s ease; }
+  .moon-lit { fill: var(--moon-lit); }
+  .moon-rim { fill: none; stroke: rgba(128,128,136,0.38); stroke-width: 1; }
+
+  /* Alba · Tramonto: arco del percorso del sole; tratto percorso colorato, resto tratteggiato */
+  .sun-arc { display: block; width: 100%; max-width: 9.5rem; height: auto; margin: 4px auto 0; overflow: visible; }
+  .sun-arc .horizon { stroke: var(--sep); stroke-width: 1.5; stroke-linecap: round; }
+  .sun-arc .track { fill: none; stroke: var(--text-4); stroke-width: 1.5; stroke-dasharray: 2 3.5; stroke-linecap: round; opacity: 0.85; }
+  .sun-arc .progress { fill: none; stroke: url(#sunGrad); stroke-width: 2.75; stroke-linecap: round; }
+  .sun-arc .sun { fill: #ffcc00; stroke: var(--surface); stroke-width: 2; filter: drop-shadow(0 0 4px rgba(255,204,0,0.6)); transition: opacity 0.3s ease; }
+  .sun-times { display: flex; justify-content: space-between; padding: 0 3%; margin-top: 2px; font-size: 0.875rem; font-weight: 600; line-height: 1.3; letter-spacing: -0.005em; }
+
+  /* Neve: nel pezzo libero dell'anello dei temporali, da azzurro ghiaccio a blu (compare solo se è prevista) */
+  .gauge-snow { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.4s ease; }
+  .gauge-snow.on { opacity: 1; }
+  .gauge-snow .gauge-arc { background: conic-gradient(from 145deg, #bfe3ff 0deg, #0a84ff 70deg, transparent 70.2deg); }
+  #risk-num { color: var(--blue); font-weight: 600; }
+
+  /* Pressione: quadrante neutro (nessun verde/rosso: la pressione non è né buona né cattiva) */
+  .gauge-press .gauge-arc { background: conic-gradient(from 225deg, var(--dial-a) 0deg, var(--dial-b) 270deg, transparent 270.2deg); }
+  .gauge-ticks { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .gauge-ticks .ptick { stroke: var(--text-4); stroke-width: 1.2; stroke-linecap: round; }
+  .gauge-ticks .ptick.major { stroke: var(--text-3); stroke-width: 1.8; }
+  .gauge-ticks .pend { font: 600 7.5px system-ui, -apple-system, "SF Pro Text", "Segoe UI", sans-serif; fill: var(--text-4); text-anchor: middle; }
+
+  /* Visibilità: tre colline che sfumano con la nebbia (--f: 0 limpido … 1 nebbia fitta) */
+  .vis-scene { display: block; width: 100%; max-width: 9rem; height: auto; margin: 6px auto 8px; }
+  .vis-scene .hill { transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), fill 0.4s ease; }
+  .vis-scene .h3 { fill: var(--hill-3); opacity: calc(1 - var(--f, 0)); }
+  .vis-scene .h2 { fill: var(--hill-2); opacity: calc(1 - var(--f, 0) * 0.75); }
+  .vis-scene .h1 { fill: var(--hill-1); opacity: calc(1 - var(--f, 0) * 0.4); }
+
+  /* estremità arrotondate dell'arco */
+  .gauge-cap { position: absolute; inset: 0; transform: rotate(var(--a)); pointer-events: none; }
+  .gauge-cap::after {
+    content: ''; position: absolute; top: 0; left: 50%; width: 11px; height: 11px;
+    margin-left: -5.5px; border-radius: 50%; background: var(--c);
+  }
+  .gauge-hand {
+    position: absolute; inset: 0; pointer-events: none; will-change: transform;
+    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); /* fallback */
+    transition: transform 0.75s linear(0, 0.069, 0.212, 0.368, 0.511, 0.631, 0.727, 0.801, 0.856, 0.897, 0.927, 0.949, 0.964, 0.975, 0.983, 0.988, 0.992, 0.994, 0.996, 0.997, 0.998, 0.999, 1);
+  }
+  .gauge-dot {
+    position: absolute; top: -2.5px; left: 50%; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%;
+    background: var(--dot-fill); border: 3px solid var(--dot-ring); box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    transition: background-color 0.4s ease, border-color 0.4s ease;
+  }
+  .gauge-center { position: absolute; inset: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .gauge-center .s-value { font-size: 0.9375rem; line-height: 1.15; }
+  .gauge-num { font-size: 0.6875rem; line-height: 1.3; color: var(--text-3); margin: 2px 0 0; letter-spacing: 0.01em; }
+
+  @media (max-width: 360px) {
+    .stat-card .s-value[data-size="sm"] { font-size: 0.9375rem; }
+    .stat-card .s-label { font-size: 0.625rem; gap: 6px; }
+    .wrap { padding-left: 12px; padding-right: 12px; }
+  }
+
+  /* ---------- Radar ---------- */
   .radar-embed {
-    background: #fff; border-radius: 32px; border: 0.5px solid rgba(0,0,0,0.06);
-    overflow: hidden; margin-bottom: 8px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+    background: var(--surface); border-radius: 32px; border: 0;
+    overflow: hidden; margin-bottom: 8px; box-shadow: var(--shadow-lg);
   }
   .radar-embed iframe { width: 100%; height: 420px; border: 0; display: block; }
-  .radar-note { font-size: 12px; color: #86868b; margin: 0 0 14px; }
-  .days-row { display: flex; }
-  .day-tab {
-    flex: 1; text-align: center; padding: 10px 4px; border-radius: 20px;
-    cursor: pointer; font-size: 12px; color: #6e6e73;
-  }
-  .day-tab.active { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-  .day-tab .dname { font-weight: 600; font-size: 12px; margin-bottom: 4px; color: #1d1d1f; }
-  .day-tab.active .dname { color: #0071e3; }
-  .day-tab i { font-size: 20px; color: #6e6e73; display: block; margin: 4px 0; }
-  .day-tab .drange { font-size: 11px; color: #86868b; }
-  .day-tab .drange b { color: #1d1d1f; }
 
-  .chart-panel {
-    background: #fff; border-radius: 32px; border: 0.5px solid rgba(0,0,0,0.06);
-    padding: 16px 14px; margin-bottom: 14px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.22);
-  }
-  .chart-panel .ctitle { font-size: 13px; font-weight: 600; margin: 0 0 10px; text-align: center; }
-  .chart-wrap { position: relative; width: 100%; height: 220px; }
+  .status { font-size: 0.8125rem; color: var(--text-3); padding: 20px 0; text-align: center; }
+  footer { text-align: center; font-size: 0.75rem; color: var(--text-4); margin-top: 32px; }
 
-  .status { font-size: 13px; color: #86868b; padding: 20px 0; text-align: center; }
-  footer { text-align: center; font-size: 12px; color: #a1a1a6; margin-top: 32px; }
+
+  /* ---------- Layout adattivo ----------
+     Stretto: una colonna. Largo (monitor) o telefono in orizzontale: due colonne affiancate,
+     a sinistra "adesso" (temperatura, giorni, grafico), a destra i dettagli e il radar. */
+  .layout { display: block; }
+  @media (min-width: 1000px), (min-width: 641px) and (max-height: 500px) and (orientation: landscape) {
+    .wrap, .nav-inner { max-width: 1180px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 24px; align-items: start; }
+    .hero { margin-top: 0; }
+    .radar-embed iframe { height: 380px; }
+  }
+  @media (min-width: 1000px) {
+    .chart-wrap { height: 260px; }
+  }
+
+  /* Monitor molto largo (es. 2560×1440): tre colonne — adesso | dettagli | radar sempre in vista.
+     C'è spazio per tutto, quindi i 9 riquadri sono sempre visibili e il bottone "Tutti i dettagli" scompare. */
+  @media (min-width: 1600px) {
+    .wrap, .nav-inner { max-width: 1840px; }
+    .layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.2fr); }
+    .col-side { display: contents; }          /* i figli diventano celle della griglia */
+    .col-main { grid-column: 1; grid-row: 1; }
+    .stats-grid { grid-column: 2; grid-row: 1; margin-bottom: 0; }
+    .more-wrap { display: none; }
+    .radar-embed { grid-column: 3; grid-row: 1; position: sticky; top: 64px; margin-bottom: 0; }
+    .radar-embed iframe { height: clamp(520px, calc(100vh - 140px), 760px); }
+  }
+  @media (max-height: 500px) and (orientation: landscape) {
+    .hero .icon-big { font-size: 3rem; margin-top: 4px; }
+    .hero .temp-big { font-size: 4rem; }
+    .chart-wrap { height: 200px; }
+  }
+
+  /* mouse: segnali discreti al passaggio, solo dove c'è un puntatore preciso */
+  @media (hover: hover) and (pointer: fine) {
+    .day-tab:not(.active):hover { background: rgba(120,120,128,0.08); }
+    .theme-opt:hover { color: var(--text); }
+    .geo-btn:hover, .more-btn:hover { opacity: 0.8; }
+  }
+
+  /* ---------- Accessibilità ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    .card-enter, .forecast.fade-in { animation: none; }
+    .more-btn, .more-btn i { transition: none; }
+    .more-btn:active { opacity: 0.6; transform: none; }
+    .sun-arc .sun, .gauge-snow, .vis-scene .hill { transition: none; }
+    .gauge-hand, .compass-arrow, .geo-btn, .day-tab, .back, .theme-thumb, .theme-opt, .nav::before { transition: none; }
+    .nav::before { transform: none; }
+    .geo-btn:active { opacity: 0.6; transform: none; }
+    .day-tab:active { opacity: 0.6; transform: none; }
+    .theme-opt:active { opacity: 0.6; transform: none; }
+    body, .stat-card, .chart-panel, .card-panel, .day-pill, .gauge-dot { transition: none; }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .nav::before, .nav.scrolled::before { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  }
+  @media (prefers-contrast: more) {
+    :root { --hairline: rgba(0,0,0,0.45); --text-3: #555; --text-2: #3a3a3c; --nav-bg: var(--bg); }
+    .nav::before, .nav.scrolled::before { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--bg); }
+    .geo-btn { border-width: 1px; }
+  }
+  @media (prefers-contrast: more) {
+    :root[data-theme="dark"] { --hairline: rgba(255,255,255,0.6); --text-3: #c7c7cc; --text-2: #e5e5ea; }
+  }
 </style>
 </head>
 <body>
+
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="back" href="../index.html"><i class="ti ti-chevron-left" aria-hidden="true"></i> Weather Commander</a>
+    <div class="nav-actions">
+      <div class="theme-seg" id="theme-seg" role="radiogroup" aria-label="Tema" data-active="light">
+        <span class="theme-thumb" aria-hidden="true"></span>
+        <button type="button" class="theme-opt" role="radio" aria-checked="true" aria-label="Tema chiaro" data-theme="light"><i class="ti ti-sun" aria-hidden="true"></i></button>
+        <button type="button" class="theme-opt" role="radio" aria-checked="false" aria-label="Tema scuro" data-theme="dark"><i class="ti ti-moon" aria-hidden="true"></i></button>
+      </div>
+      <button class="geo-btn" onclick="useMyLocation()" aria-label="Aggiorna posizione"><i class="ti ti-current-location" aria-hidden="true"></i><span class="geo-label">Aggiorna posizione</span></button>
+    </div>
+  </div>
+</header>
+
 <div class="wrap">
 
-  <div class="top-bar">
-    <a class="back" href="../index.html" style="margin-bottom:0;"><i class="ti ti-chevron-left" aria-hidden="true"></i> Weather Commander</a>
-    <button class="geo-btn" onclick="useMyLocation()"><i class="ti ti-current-location" aria-hidden="true"></i>Aggiorna posizione</button>
-  </div>
-  <p class="geo-status" id="geo-status"></p>
+  <p class="geo-status" id="geo-status" role="status"></p>
+
+  <div class="layout">
+  <div class="col-main">
 
   <div class="hero">
     <p class="place" id="place-name">Correggio, Reggio Emilia</p>
@@ -134,69 +496,128 @@
     <p class="temp-big" id="hero-temp">&hellip;</p>
     <p class="cond" id="hero-cond">Caricamento&hellip;</p>
     <p class="hilo" id="hero-hilo"></p>
+    <p class="forecast" id="forecast"></p>
   </div>
 
   <div class="card-panel">
-    <div class="days-row" id="days-row"></div>
-  </div>
-
-  <div class="chart-panel">
-    <p class="ctitle">Andamento temperatura e pioggia</p>
-    <div class="chart-wrap">
-      <canvas id="tempChart"></canvas>
+    <div class="days-row" id="days-row" role="tablist" aria-label="Giorno della previsione">
+      <span class="day-pill" id="day-pill" aria-hidden="true"></span>
+      <div class="days-tabs" id="days-tabs"></div>
     </div>
   </div>
+
+  <div class="chart-panel" id="chart-panel">
+    <div class="chart-slider" id="chart-slider">
+      <p class="ctitle">Andamento temperatura e pioggia<span id="ctitle-day"></span></p>
+      <div class="chart-wrap">
+        <canvas id="tempChart" role="img" aria-label="Andamento orario di temperatura e probabilit&agrave; di pioggia"></canvas>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+  <div class="col-side">
 
   <div class="stats-grid" id="stats-grid">
-    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-uv"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><line x1="12" y1="1.5" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22.5" y2="12"/><line x1="4.5" y1="4.5" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.5" y2="19.5"/><line x1="4.5" y1="19.5" x2="6.3" y2="17.7"/><line x1="17.7" y1="6.3" x2="19.5" y2="4.5"/></svg></span>Indice UV</p><p class="s-value" id="stat-uv">&hellip;</p></div>
-    <div class="stat-card">
+    <div class="stat-card gauge-card" id="uv-card" role="img" aria-label="Indice UV" hidden>
+      <p class="s-label"><span class="icon-badge icon-uv"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><line x1="12" y1="1.5" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22.5" y2="12"/><line x1="4.5" y1="4.5" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.5" y2="19.5"/><line x1="4.5" y1="19.5" x2="6.3" y2="17.7"/><line x1="17.7" y1="6.3" x2="19.5" y2="4.5"/></svg></span>Indice UV</p>
+      <div class="gauge gauge-uv">
+        <div class="gauge-arc"></div>
+        <span class="gauge-cap" style="--a:-135deg;--c:#34c759"></span>
+        <span class="gauge-cap" style="--a:135deg;--c:#af52de"></span>
+        <div class="gauge-hand" id="uv-marker" style="transform:rotate(-135deg)"><span class="gauge-dot"></span></div>
+        <div class="gauge-center"><p class="s-value" id="uv-label">&hellip;</p><p class="gauge-num" id="uv-num"></p></div>
+      </div>
+      <p class="gauge-foot" id="uv-foot"></p>
+    </div>
+    <div class="stat-card compass-card" id="card-wind" hidden>
+      <p class="s-label"><span class="icon-badge icon-wind"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9.5h11a2.8 2.8 0 1 0-2.8-2.8"/><path d="M2.5 14.5h15.5a2.8 2.8 0 1 1-2.8 2.8"/><path d="M2.5 19h9a2.2 2.2 0 1 0-2.2-2.2"/></svg></span>Vento</p>
+      <div class="compass">
+        <svg class="compass-face" viewBox="0 0 120 120" aria-hidden="true"><line class="tick major" x1="60.0" y1="11.0" x2="60.0" y2="3.0"/><line class="tick" x1="69.2" y1="7.8" x2="69.9" y2="3.9"/><line class="tick" x1="78.1" y1="10.2" x2="79.5" y2="6.4"/><line class="tick" x1="86.5" y1="14.1" x2="88.5" y2="10.6"/><line class="tick" x1="94.1" y1="19.4" x2="96.6" y2="16.3"/><line class="tick" x1="100.6" y1="25.9" x2="103.7" y2="23.4"/><line class="tick" x1="105.9" y1="33.5" x2="109.4" y2="31.5"/><line class="tick" x1="109.8" y1="41.9" x2="113.6" y2="40.5"/><line class="tick" x1="112.2" y1="50.8" x2="116.1" y2="50.1"/><line class="tick major" x1="109.0" y1="60.0" x2="117.0" y2="60.0"/><line class="tick" x1="112.2" y1="69.2" x2="116.1" y2="69.9"/><line class="tick" x1="109.8" y1="78.1" x2="113.6" y2="79.5"/><line class="tick" x1="105.9" y1="86.5" x2="109.4" y2="88.5"/><line class="tick" x1="100.6" y1="94.1" x2="103.7" y2="96.6"/><line class="tick" x1="94.1" y1="100.6" x2="96.6" y2="103.7"/><line class="tick" x1="86.5" y1="105.9" x2="88.5" y2="109.4"/><line class="tick" x1="78.1" y1="109.8" x2="79.5" y2="113.6"/><line class="tick" x1="69.2" y1="112.2" x2="69.9" y2="116.1"/><line class="tick major" x1="60.0" y1="109.0" x2="60.0" y2="117.0"/><line class="tick" x1="50.8" y1="112.2" x2="50.1" y2="116.1"/><line class="tick" x1="41.9" y1="109.8" x2="40.5" y2="113.6"/><line class="tick" x1="33.5" y1="105.9" x2="31.5" y2="109.4"/><line class="tick" x1="25.9" y1="100.6" x2="23.4" y2="103.7"/><line class="tick" x1="19.4" y1="94.1" x2="16.3" y2="96.6"/><line class="tick" x1="14.1" y1="86.5" x2="10.6" y2="88.5"/><line class="tick" x1="10.2" y1="78.1" x2="6.4" y2="79.5"/><line class="tick" x1="7.8" y1="69.2" x2="3.9" y2="69.9"/><line class="tick major" x1="11.0" y1="60.0" x2="3.0" y2="60.0"/><line class="tick" x1="7.8" y1="50.8" x2="3.9" y2="50.1"/><line class="tick" x1="10.2" y1="41.9" x2="6.4" y2="40.5"/><line class="tick" x1="14.1" y1="33.5" x2="10.6" y2="31.5"/><line class="tick" x1="19.4" y1="25.9" x2="16.3" y2="23.4"/><line class="tick" x1="25.9" y1="19.4" x2="23.4" y2="16.3"/><line class="tick" x1="33.5" y1="14.1" x2="31.5" y2="10.6"/><line class="tick" x1="41.9" y1="10.2" x2="40.5" y2="6.4"/><line class="tick" x1="50.8" y1="7.8" x2="50.1" y2="3.9"/><text class="north" x="60" y="28">N</text><text x="92" y="60">E</text><text x="60" y="92">S</text><text x="28" y="60">O</text></svg>
+        <div class="compass-arrow" id="wind-arrow" style="transform:rotate(0deg)"><svg viewBox="0 0 120 120" aria-hidden="true"><path d="M52 4 L68 4 L60 19 Z"/></svg></div>
+        <div class="gauge-center"><p class="s-value" id="stat-wind">&hellip;</p><p class="gauge-num">km/h</p></div>
+      </div>
+      <p class="gauge-foot"><b id="wind-dir"></b><span id="wind-gust"></span></p>
+    </div>
+    <div class="stat-card moon-card" id="card-moon" hidden>
+      <p class="s-label"><span class="icon-badge icon-moon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 12.5a7.5 7.5 0 0 1-9.9-9.9 8 8 0 1 0 9.9 9.9z"/><circle cx="19" cy="5" r="0.6" fill="currentColor" stroke="none"/><circle cx="20.5" cy="8.5" r="0.4" fill="currentColor" stroke="none"/></svg></span>Luna</p>
+      <svg class="moon" id="moon-svg" width="84" height="84" viewBox="0 0 100 100" role="img" aria-label="Fase lunare"><circle class="moon-dark" cx="50" cy="50" r="44"/><path class="moon-lit" id="moon-lit" d=""/><circle class="moon-rim" cx="50" cy="50" r="44"/></svg>
+      <p class="s-value" id="stat-moon" data-size="sm">&hellip;</p>
+      <p class="s-sub" id="moon-sub"></p>
+    </div>
+    <div class="stat-card gauge-card" id="hum-card" role="img" aria-label="Umidit&agrave;" hidden>
+      <p class="s-label"><span class="icon-badge icon-humidity"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c3 4 6.5 8.2 6.5 12A6.5 6.5 0 0 1 5.5 14.5c0-3.8 3.5-8 6.5-12z"/><path d="M9.3 15.5a2.7 2.7 0 0 0 2.7 2.7"/></svg></span>Umidit&agrave;</p>
+      <div class="gauge gauge-hum">
+        <div class="gauge-arc"></div>
+        <span class="gauge-cap" style="--a:-135deg;--c:#ff9500"></span>
+        <span class="gauge-cap" style="--a:135deg;--c:#0a84ff"></span>
+        <div class="gauge-hand" id="hum-marker" style="transform:rotate(-135deg)"><span class="gauge-dot"></span></div>
+        <div class="gauge-center"><p class="s-value" id="hum-label">&hellip;</p><p class="gauge-num" id="hum-num"></p></div>
+      </div>
+    </div>
+    <div class="stat-card gauge-card" id="risk-card" role="img" aria-label="Temporali &middot; grandine" hidden>
+      <p class="s-label"><span class="icon-badge icon-risk"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 17a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.6 9.5a4 4 0 0 1-.6 7.5H6.5z"/><path d="M13 12l-2.5 3.5H13L10.5 19"/></svg></span><span id="risk-title">Temporali &middot; grandine</span></p>
+      <div class="gauge gauge-risk">
+        <div class="gauge-arc"></div>
+        <span class="gauge-cap" style="--a:-135deg;--c:#34c759"></span>
+        <span class="gauge-cap" style="--a:135deg;--c:#ff3b30"></span>
+        <div class="gauge-hand" id="risk-marker" style="transform:rotate(-135deg)"><span class="gauge-dot"></span></div>
+        <div class="gauge-snow" id="risk-snow">
+          <div class="gauge-arc"></div>
+          <span class="gauge-cap" style="--a:145deg;--c:#bfe3ff"></span>
+          <span class="gauge-cap" style="--a:215deg;--c:#0a84ff"></span>
+          <div class="gauge-hand" id="snow-marker" style="transform:rotate(145deg)"><span class="gauge-dot"></span></div>
+        </div>
+        <div class="gauge-center"><p class="s-value" id="risk-label">&hellip;</p><p class="gauge-num" id="risk-num"></p></div>
+      </div>
+    </div>
+    <div class="stat-card gauge-card" id="aqi-card" role="img" aria-label="Qualit&agrave; aria" hidden>
+      <p class="s-label"><span class="icon-badge icon-air"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h11a3 3 0 1 0-3-3"/><path d="M3 13h15a3 3 0 1 1-3 3"/><path d="M3 18h9a2.2 2.2 0 1 0-2.2-2.2"/></svg></span>Qualit&agrave; aria</p>
+      <div class="gauge gauge-aqi">
+        <div class="gauge-arc"></div>
+        <span class="gauge-cap" style="--a:-135deg;--c:#34c759"></span>
+        <span class="gauge-cap" style="--a:135deg;--c:#ff3b30"></span>
+        <div class="gauge-hand" id="aqi-marker" style="transform:rotate(-135deg)"><span class="gauge-dot"></span></div>
+        <div class="gauge-center"><p class="s-value" id="aqi-label">&hellip;</p><p class="gauge-num" id="aqi-num"></p></div>
+      </div>
+    </div>
+    <div class="stat-card sun-card" id="card-sun" hidden>
       <p class="s-label"><span class="icon-badge icon-sunrise"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4"/><path d="M5.6 8.6l1.8 1.8"/><path d="M16.6 8.6l-1.8 1.8"/><path d="M3 14h2.5"/><path d="M18.5 14H21"/><path d="M6 18h12"/><path d="M8 14a4 4 0 0 1 8 0"/><path d="M2 21h20"/></svg></span>Alba &middot; Tramonto</p>
-      <div class="sun-row">
-        <div><p class="s-value" id="stat-sunrise" style="font-size:16px;">&hellip;</p></div>
-        <div class="sun-sep"></div>
-        <div><p class="s-value" id="stat-sunset" style="font-size:16px;">&hellip;</p></div>
-      </div>
+      <svg class="sun-arc" viewBox="0 0 120 60" aria-hidden="true"><defs><linearGradient id="sunGrad" gradientUnits="userSpaceOnUse" x1="10" y1="0" x2="110" y2="0"><stop offset="0" stop-color="#ffcc00"/><stop offset="1" stop-color="#ff9500"/></linearGradient></defs><line class="horizon" x1="2" y1="52" x2="118" y2="52"/><path class="track" d="M10 52 A50 50 0 0 1 110 52" pathLength="100"/><path class="progress" id="sun-progress" d="M10 52 A50 50 0 0 1 110 52" pathLength="100" style="stroke-dasharray:0 100"/><circle class="sun" id="sun-dot" r="5.5" cx="10" cy="52"/></svg>
+      <div class="sun-times"><span id="stat-sunrise">&hellip;</span><span id="stat-sunset">&hellip;</span></div>
+      <p class="s-sub" id="sun-sub"></p>
     </div>
-    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-wind"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9.5h11a2.8 2.8 0 1 0-2.8-2.8"/><path d="M2.5 14.5h15.5a2.8 2.8 0 1 1-2.8 2.8"/><path d="M2.5 19h9a2.2 2.2 0 1 0-2.2-2.2"/></svg></span>Vento</p><p class="s-value" id="stat-wind">&hellip;</p><p class="s-sub" id="stat-wind-dir"></p></div>
-    <div class="stat-card"><p class="s-label"><span class="icon-badge icon-moon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 12.5a7.5 7.5 0 0 1-9.9-9.9 8 8 0 1 0 9.9 9.9z"/><circle cx="19" cy="5" r="0.6" fill="currentColor" stroke="none"/><circle cx="20.5" cy="8.5" r="0.4" fill="currentColor" stroke="none"/></svg></span>Fase lunare</p><p class="s-value" id="stat-moon" style="font-size:15px;">&hellip;</p></div>
-    <div class="stat-card">
-      <p class="s-label"><span class="icon-badge icon-humidity"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c3 4 6.5 8.2 6.5 12A6.5 6.5 0 0 1 5.5 14.5c0-3.8 3.5-8 6.5-12z"/><path d="M9.3 15.5a2.7 2.7 0 0 0 2.7 2.7"/></svg></span>Umidit&agrave; &middot; Pressione</p>
-      <div class="sun-row">
-        <div><p class="s-value" id="stat-humidity" style="font-size:16px;">&hellip;</p></div>
-        <div class="sun-sep"></div>
-        <div><p class="s-value" id="stat-pressure" style="font-size:16px;">&hellip;</p></div>
-      </div>
+    <div class="stat-card vis-card" id="card-visibility" hidden>
+      <p class="s-label"><span class="icon-badge icon-visibility"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9c1.8-1.8 3.8-2.7 6-2.7"/><path d="M2 12.5c2.5-2.2 5-3.3 10-3.3s7.5 1.1 10 3.3"/><path d="M2 16c3.2-1.3 6.2-2 10-2s6.8.7 10 2"/></svg></span>Visibilit&agrave;</p>
+      <svg class="vis-scene" id="vis-scene" viewBox="0 0 120 60" aria-hidden="true" style="--f:0"><path class="hill h3" d="M0 36 Q22 14 46 28 T92 22 T120 30 V60 H0 Z"/><path class="hill h2" d="M0 45 Q26 26 54 39 T104 33 T120 40 V60 H0 Z"/><path class="hill h1" d="M0 54 Q32 40 64 50 T120 46 V60 H0 Z"/></svg>
+      <p class="s-value" id="stat-visibility" data-size="sm">&hellip;</p>
+      <p class="s-sub" id="stat-fog-note"></p>
     </div>
-    <div class="stat-card">
-      <p class="s-label"><span class="icon-badge icon-visibility"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9c1.8-1.8 3.8-2.7 6-2.7"/><path d="M2 12.5c2.5-2.2 5-3.3 10-3.3s7.5 1.1 10 3.3"/><path d="M2 16c3.2-1.3 6.2-2 10-2s6.8.7 10 2"/></svg></span>Visibilit&agrave; &middot; Neve</p>
-      <div class="sun-row">
-        <div><p class="s-value" id="stat-visibility" style="font-size:16px;">&hellip;</p><p class="s-sub" id="stat-fog-note"></p></div>
-        <div class="sun-sep"></div>
-        <div><p class="s-value" id="stat-snow" style="font-size:16px;">&hellip;</p><p class="s-sub" id="stat-snow-sub"></p></div>
+    <div class="stat-card gauge-card pressure-card" id="card-pressure" data-trend="flat" hidden>
+      <p class="s-label"><span class="icon-badge icon-pressure"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 12l3.5-3.5"/><path d="M12 6.5v.01"/><path d="M17.5 12h.01"/><path d="M6.5 12h.01"/></svg></span> Pressione</p>
+      <div class="gauge gauge-press">
+        <div class="gauge-arc"></div>
+        <svg class="gauge-ticks" viewBox="0 0 120 120" aria-hidden="true"><line class="ptick major" x1="33.1" y1="86.9" x2="28.9" y2="91.1"/><line class="ptick" x1="22.1" y1="75.7" x2="19.3" y2="76.8"/><line class="ptick" x1="19.0" y1="60.0" x2="16.0" y2="60.0"/><line class="ptick" x1="22.1" y1="44.3" x2="19.3" y2="43.2"/><line class="ptick" x1="31.0" y1="31.0" x2="28.9" y2="28.9"/><line class="ptick" x1="44.3" y1="22.1" x2="43.2" y2="19.3"/><line class="ptick major" x1="60.0" y1="22.0" x2="60.0" y2="16.0"/><line class="ptick" x1="75.7" y1="22.1" x2="76.8" y2="19.3"/><line class="ptick" x1="89.0" y1="31.0" x2="91.1" y2="28.9"/><line class="ptick" x1="97.9" y1="44.3" x2="100.7" y2="43.2"/><line class="ptick" x1="101.0" y1="60.0" x2="104.0" y2="60.0"/><line class="ptick" x1="97.9" y1="75.7" x2="100.7" y2="76.8"/><line class="ptick major" x1="86.9" y1="86.9" x2="91.1" y2="91.1"/><text class="pend" x="22" y="110">980</text><text class="pend" x="98" y="110">1040</text></svg>
+        <span class="gauge-cap" style="--a:-135deg;--c:var(--dial-a)"></span>
+        <span class="gauge-cap" style="--a:135deg;--c:var(--dial-b)"></span>
+        <div class="gauge-hand" id="press-marker" style="transform:rotate(-135deg)"><span class="gauge-dot"></span></div>
+        <div class="gauge-center"><p class="s-value" id="stat-pressure">&hellip;</p><p class="gauge-num">hPa</p></div>
       </div>
+      <p class="pressure-trend"><i class="ti ti-minus" id="pressure-arrow" aria-hidden="true"></i><span id="pressure-word"></span></p>
+      <p class="gauge-foot" id="pressure-detail"></p>
     </div>
-    <div class="stat-card wide">
-      <p class="s-label"><span class="icon-badge icon-risk"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 17a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.6 9.5a4 4 0 0 1-.6 7.5H6.5z"/><path d="M13 12l-2.5 3.5H13L10.5 19"/></svg></span>Rischio temporali &middot; grandine</p>
-      <p class="s-value" id="risk-label">&hellip;</p>
-      <div class="risk-bar-wrap">
-        <div class="risk-bar"><div class="risk-marker" id="risk-marker" style="left:0%;"></div></div>
-        <div class="risk-label-row"><span>Basso</span><span>Moderato</span><span>Alto</span></div>
-      </div>
-      <p class="s-sub" id="risk-sub" style="margin-top:8px;"></p>
-    </div>
-    <div class="stat-card wide">
-      <p class="s-label"><span class="icon-badge icon-air"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h11a3 3 0 1 0-3-3"/><path d="M3 13h15a3 3 0 1 1-3 3"/><path d="M3 18h9a2.2 2.2 0 1 0-2.2-2.2"/></svg></span>Qualit&agrave; dell'aria</p>
-      <p class="s-value" id="aqi-label">&hellip;</p>
-      <div class="risk-bar-wrap">
-        <div class="risk-bar" style="background: linear-gradient(90deg, #34c759 0%, #ffcc00 35%, #ff9500 65%, #ff3b30 100%);"><div class="risk-marker" id="aqi-marker" style="left:0%;"></div></div>
-        <div class="risk-label-row"><span>Buona</span><span>Moderata</span><span>Scarsa</span></div>
-      </div>
-      <p class="s-sub" id="aqi-sub" style="margin-top:8px;"></p>
-    </div>
+  </div>
+
+  <div class="more-wrap" id="more-wrap" hidden>
+    <button type="button" class="more-btn" id="more-btn" aria-expanded="false" aria-controls="stats-grid"><span id="more-label">Tutti i dettagli</span><i class="ti ti-chevron-down" aria-hidden="true"></i></button>
   </div>
 
   <div class="radar-embed">
     <iframe id="radar-iframe" src="" loading="lazy" title="Radar precipitazioni live"></iframe>
+  </div>
+
+  </div>
   </div>
 
 </div>
@@ -209,6 +630,18 @@
   let hourlyFull = null;
   let dailyFull = null;
   let chartInstance = null;
+  let currentHourIdx = null;
+  let pressureInfo = null;       // tendenza della pressione (solo per la previsione di oggi)
+  let loadToken = 0;            // scarta le risposte di caricamenti ormai superati
+
+  // Rilevanza dei riquadri: in vista compatta ne mostriamo i più utili adesso (da 3 a 9 secondo lo spazio).
+  // L'ordine delle chiavi è quello del DOM (a parità di punteggio vince il primo).
+  const relevance = {
+    'uv-card': 0, 'card-wind': 0, 'card-moon': 5, 'hum-card': 20, 'risk-card': 0, 'aqi-card': 0,
+    'card-sun': 35, 'card-visibility': 10, 'card-pressure': 15
+  };
+  const ready = { weather: false, aqi: false, pressure: false };  // si decide solo a dati completi: niente riquadri che saltano
+  let showAll = false;
 
   const WMO = {
     0: ['ti-sun', 'Sereno'], 1: ['ti-sun', 'Prevalentemente sereno'], 2: ['ti-cloud', 'Parzialmente nuvoloso'],
@@ -223,13 +656,246 @@
 
   const DAY_LABELS = ['Oggi', 'Domani', 'Dopodomani'];
 
-  function useMyLocation() {
+  /* =====================================================================
+     Fisica del movimento (principi Apple: molle, velocità, momentum)
+     ===================================================================== */
+  const prefersReduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Molla con i due parametri "da designer": damping ratio e response (secondi).
+  // Non ha durata fissa: ogni nuovo target riparte dal valore E dalla velocità correnti,
+  // quindi è sempre interrompibile (si può afferrare e invertire a metà corsa).
+  class Spring {
+    constructor(value = 0, eps = 0.01) {
+      this.x = value; this.v = 0; this.target = value;
+      this.k = 0; this.c = 0; this.eps = eps;
+      this.raf = 0; this.t0 = 0; this.cb = null; this.done = null;
+      this.step = this.step.bind(this);
+    }
+    get running() { return !!this.raf; }
+    set(value) { this.stop(); this.x = value; this.v = 0; this.target = value; if (this.cb) this.cb(value); }
+    to(target, { damping = 1, response = 0.4, velocity = this.v, onDone = null } = {}) {
+      const w = (2 * Math.PI) / response;
+      this.k = w * w; this.c = 2 * damping * w;
+      this.target = target; this.v = velocity; this.done = onDone;
+      if (!this.raf) { this.t0 = performance.now(); this.raf = requestAnimationFrame(this.step); }
+    }
+    step(now) {
+      const dt = Math.min((now - this.t0) / 1000, 0.064);
+      this.t0 = now;
+      const n = Math.max(1, Math.ceil(dt / 0.004)), h = dt / n;
+      for (let i = 0; i < n; i++) {
+        const a = -this.k * (this.x - this.target) - this.c * this.v;
+        this.v += a * h; this.x += this.v * h;
+      }
+      if (this.cb) this.cb(this.x);
+      if (Math.abs(this.x - this.target) < this.eps && Math.abs(this.v) < this.eps * 10) {
+        this.x = this.target; this.v = 0; this.raf = 0;
+        if (this.cb) this.cb(this.x);
+        const d = this.done; this.done = null; if (d) d();
+        return;
+      }
+      this.raf = requestAnimationFrame(this.step);
+    }
+    stop() { cancelAnimationFrame(this.raf); this.raf = 0; this.done = null; }
+  }
+
+  // Proiezione del momentum: dove si fermerebbe il gesto (decelerazione esponenziale, come lo scroll).
+  const project = (v, d = 0.998) => (v / 1000) * d / (1 - d);
+  // Resistenza progressiva oltre il bordo, invece di un muro.
+  const rubberband = (o, dim, c = 0.55) => (o * dim * c) / (dim + c * Math.abs(o));
+
+  /* =====================================================================
+     Selettore giorni + grafico scorrevole
+     ===================================================================== */
+  const panel = document.getElementById('chart-panel');
+  const slider = document.getElementById('chart-slider');
+  const pill = document.getElementById('day-pill');
+  const tabsEl = document.getElementById('days-tabs');
+  const nav = document.getElementById('nav');
+
+  const xSpring = new Spring(0, 0.05);    // posizione orizzontale del grafico (px)
+  const pillSpring = new Spring(0, 0.001); // posizione della pill, in "tab"
+  let phase = 0;                           // 0 = fermo/drag, 1 = in uscita, 2 = in entrata
+  let swapInfo = null;
+  let drag = null;
+
+  function applyOffset(x) {
+    const W = panel.clientWidth || 1;
+    slider.style.transform = x ? `translate3d(${x}px,0,0)` : '';
+    const k = Math.min(1, Math.abs(x) / (W * 0.5));
+    slider.style.opacity = x ? String(1 - k * k) : '';
+  }
+  function applyPill(p) { pill.style.transform = `translateX(${p * 100}%)`; }
+
+  xSpring.cb = (x) => {
+    applyOffset(x);
+    // "Nastro trasportatore": quando il vecchio giorno è uscito (opacità 0) cambiamo i dati e
+    // il nuovo giorno entra dal lato opposto, mantenendo posizione e velocità → nessuno stacco.
+    if (phase === 1 && swapInfo) {
+      const W = panel.clientWidth;
+      if (Math.sign(x) === -swapInfo.dir && Math.abs(x) >= W * 0.5) {
+        phase = 2;
+        renderDay(swapInfo.newDay);
+        const nx = x + swapInfo.dir * W;
+        xSpring.x = nx; applyOffset(nx);
+        xSpring.to(0, { damping: swapInfo.momentum ? 0.85 : 1, response: 0.3, onDone: () => { phase = 0; } });
+      }
+    }
+  };
+  pillSpring.cb = applyPill;
+
+  function commitDay(newDay, v = 0) {
+    if (!hourlyFull) return;
+    if (newDay === selectedDay) {
+      // Interruzione: se stava uscendo verso un altro giorno, torna indietro da dove si trova.
+      if (phase === 1) {
+        phase = 0; swapInfo = null;
+        xSpring.to(0, { damping: 1, response: 0.3 });
+        pillSpring.to(selectedDay, { damping: 1, response: 0.35 });
+      }
+      return;
+    }
+    if (newDay < 0 || newDay >= dailyFull.time.length) return;
+
+    if (prefersReduced()) { crossfadeTo(newDay); return; }
+
+    const W = panel.clientWidth, dir = newDay > selectedDay ? 1 : -1;
+    swapInfo = { newDay, dir, momentum: Math.abs(v) > 500 };
+    phase = 1;
+    pillSpring.to(newDay, { damping: 1, response: 0.35 });
+    xSpring.to(-dir * W, { damping: 1, response: 0.3, velocity: v });
+  }
+
+  // Reduced motion: niente scorrimenti, solo dissolvenza breve.
+  function crossfadeTo(newDay) {
+    slider.style.transition = 'opacity 0.18s ease';
+    slider.style.opacity = '0';
+    setTimeout(() => {
+      renderDay(newDay);
+      pillSpring.set(newDay);
+      slider.style.opacity = '1';
+      setTimeout(() => { slider.style.transition = ''; slider.style.opacity = ''; }, 200);
+    }, 180);
+  }
+
+  /* ---- Gesto di swipe sul grafico ---- */
+  function startDrag(e, grabbed) {
+    drag.active = true;
+    drag.x0 = e.clientX;
+    drag.base = grabbed ? xSpring.x : 0;
+    panel.setPointerCapture(drag.id);
+    panel.classList.add('dragging');
+  }
+
+  panel.addEventListener('pointerdown', (e) => {
+    if (!hourlyFull || prefersReduced()) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, base: 0, active: false, hist: [{ x: e.clientX, t: e.timeStamp }] };
+    // Afferrare un elemento in movimento: prende subito il controllo da dove si trova.
+    if (xSpring.running || phase !== 0) {
+      xSpring.stop(); pillSpring.stop(); phase = 0; swapInfo = null;
+      startDrag(e, true);
+    }
+  });
+
+  panel.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+    if (!drag.active) {
+      // Isteresi ~10px: poi si decide la direzione e si segue 1:1 (senza "scatto" iniziale).
+      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2) startDrag(e, false);
+      else if (Math.abs(dy) > 10) drag = null;
+      return;
+    }
+    const W = panel.clientWidth, last = dailyFull.time.length - 1;
+    let x = drag.base + (e.clientX - drag.x0);
+    if (x > 0 && selectedDay === 0) x = rubberband(x, W);
+    else if (x < 0 && selectedDay === last) x = rubberband(x, W);
+    x = Math.max(-W, Math.min(W, x));
+    xSpring.x = x; xSpring.v = 0; applyOffset(x);
+
+    // La pill segue il dito: indica verso dove sta andando il gesto.
+    const commitDist = Math.min(W * 0.5, 160);
+    const p = Math.max(selectedDay - 1, Math.min(selectedDay + 1, selectedDay - x / commitDist));
+    const pc = Math.max(0, Math.min(last, p));
+    pillSpring.x = pc; pillSpring.v = 0; applyPill(pc);
+
+    drag.hist.push({ x: e.clientX, t: e.timeStamp });
+    while (drag.hist.length > 2 && e.timeStamp - drag.hist[0].t > 100) drag.hist.shift();
+  });
+
+  function endDrag(e, cancelled) {
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag; drag = null;
+    panel.classList.remove('dragging');
+    if (!d.active) return;
+    try { panel.releasePointerCapture(d.id); } catch (_) {}
+
+    // Velocità di rilascio dagli ultimi ~100ms (0 se il dito si era fermato).
+    let v = 0;
+    const h = d.hist;
+    if (!cancelled && h.length > 1 && e.timeStamp - h[h.length - 1].t < 80) {
+      const dt = (h[h.length - 1].t - h[0].t) / 1000;
+      if (dt > 0.005) v = (h[h.length - 1].x - h[0].x) / dt;
+    }
+    const W = panel.clientWidth, last = dailyFull.time.length - 1;
+    const commitDist = Math.min(W * 0.5, 160);
+    const projected = xSpring.x + project(v);   // dove "finirebbe" il gesto
+
+    if (projected < -commitDist && selectedDay < last) commitDay(selectedDay + 1, v);
+    else if (projected > commitDist && selectedDay > 0) commitDay(selectedDay - 1, v);
+    else {
+      // Ritorno al posto: un filo di rimbalzo solo se il gesto aveva slancio.
+      xSpring.to(0, { damping: Math.abs(v) > 400 ? 0.8 : 1, response: 0.35, velocity: v });
+      pillSpring.to(selectedDay, { damping: 1, response: 0.35 });
+    }
+  }
+  panel.addEventListener('pointerup', (e) => endDrag(e, false));
+  panel.addEventListener('pointercancel', (e) => endDrag(e, true));
+
+  /* ---- Trackpad / rotella orizzontale: cambia giorno (una volta per gesto) ---- */
+  let wheelLock = 0;
+  panel.addEventListener('wheel', (e) => {
+    if (!hourlyFull || Math.abs(e.deltaX) < 8 || Math.abs(e.deltaX) < Math.abs(e.deltaY) * 1.5) return;
+    e.preventDefault();                       // evita anche il "indietro" del browser
+    const now = performance.now();
+    if (now < wheelLock) return;
+    const n = selectedDay + (e.deltaX > 0 ? 1 : -1);
+    if (n < 0 || n >= dailyFull.time.length) { wheelLock = now + 200; return; }
+    wheelLock = now + 650;                    // l'inerzia del trackpad non deve saltare due giorni
+    commitDay(n, 0);
+  }, { passive: false });
+
+  /* ---- Selettore giorni: tocco e tastiera ---- */
+  tabsEl.addEventListener('click', (e) => {
+    const b = e.target.closest('.day-tab');
+    if (b) commitDay(parseInt(b.dataset.day, 10), 0);
+  });
+  document.getElementById('days-row').addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const n = selectedDay + (e.key === 'ArrowRight' ? 1 : -1);
+    if (n < 0 || n >= dailyFull.time.length) return;
+    e.preventDefault();
+    commitDay(n, 0);
+    const t = tabsEl.querySelector(`.day-tab[data-day="${n}"]`);
+    if (t) t.focus();
+  });
+
+  /* Barra superiore: il bordo sfuma solo quando il contenuto scorre sotto */
+  window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 4), { passive: true });
+
+  /* =====================================================================
+     Geolocalizzazione e dati
+     ===================================================================== */
+  function useMyLocation(startup) {
     const status = document.getElementById('geo-status');
     if (!navigator.geolocation) {
       status.textContent = 'Geolocalizzazione non supportata da questo browser.';
+      if (startup) loadAll();
       return;
     }
     status.textContent = 'Individuazione della posizione in corso…';
+    if (startup) document.getElementById('hero-cond').textContent = 'Individuazione della posizione…';
     navigator.geolocation.getCurrentPosition(async (pos) => {
       LAT = pos.coords.latitude;
       LON = pos.coords.longitude;
@@ -247,8 +913,9 @@
       status.textContent = '';
       loadAll();
     }, (err) => {
-      status.textContent = 'Posizione non disponibile (permesso negato) — resto su Correggio.';
-    }, { timeout: 8000 });
+      status.textContent = (err.code === 1 ? 'Permesso di posizione negato' : 'Posizione non disponibile') + ' — resto su ' + PLACE_NAME + '.';
+      if (startup) loadAll();
+    }, { timeout: 8000, maximumAge: 600000 });
   }
 
   function findClosestHourIndex(times) {
@@ -261,6 +928,46 @@
     return best;
   }
 
+  const WIND_NAMES = ['Nord', 'Nord-Est', 'Est', 'Sud-Est', 'Sud', 'Sud-Ovest', 'Ovest', 'Nord-Ovest'];
+  const degToName = deg => WIND_NAMES[Math.round(deg / 45) % 8];
+
+  // UV: scala OMS (basso / moderato / alto / molto alto / estremo) + fascia in cui serve protezione (UV ≥ 3).
+  function uvWord(u) {
+    if (u < 3) return 'Basso';
+    if (u < 6) return 'Moderato';
+    if (u < 8) return 'Alto';
+    if (u < 11) return 'Molto alto';
+    return 'Estremo';
+  }
+  function renderUV(uv, hourly) {
+    if (uv == null) {
+      document.getElementById('uv-label').textContent = '--';
+      document.getElementById('uv-num').textContent = '';
+      document.getElementById('uv-foot').textContent = '';
+      setGauge('uv', 0, 'Indice UV non disponibile');
+      return;
+    }
+    const word = uvWord(uv);
+    document.getElementById('uv-label').textContent = word;
+    document.getElementById('uv-num').textContent = 'UV ' + uv.toFixed(1).replace('.', ',');
+    const hs = [];
+    (hourly.uv_index || []).slice(0, 24).forEach((v, i) => { if (v >= 3) hs.push(i); });
+    const foot = hs.length ? 'Protezione ' + hs[0] + '\u2013' + (hs[hs.length - 1] + 1) : 'Nessuna protezione necessaria';
+    document.getElementById('uv-foot').textContent = foot;
+    setGauge('uv', Math.min(uv, 11) / 11 * 100, 'Indice UV ' + uv.toFixed(1).replace('.', ',') + ': ' + word + '. ' + foot + '.');
+  }
+
+  // Vento: la freccia sul bordo della bussola indica DA DOVE arriva; ruota per la via più breve.
+  let windAngle = 0;
+  function renderWind(speed, deg, gust) {
+    document.getElementById('stat-wind').textContent = Math.round(speed);
+    document.getElementById('wind-dir').textContent = 'da ' + degToName(deg);
+    document.getElementById('wind-gust').textContent = (gust != null && gust > speed + 1) ? 'raffiche ' + Math.round(gust) + ' km/h' : '';
+    windAngle += ((((deg - windAngle) % 360) + 540) % 360) - 180;
+    document.getElementById('wind-arrow').style.transform = 'rotate(' + windAngle + 'deg)';
+    document.getElementById('card-wind').title = 'Vento ' + Math.round(speed) + ' km/h da ' + degToName(deg);
+  }
+
   function degToCompass(deg) {
     const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
     return dirs[Math.round(deg / 45) % 8];
@@ -269,17 +976,77 @@
   // Fase lunare calcolata localmente (nessuna API la fornisce):
   // età lunare in giorni rispetto a un novilunio di riferimento noto,
   // sul ciclo sinodico medio di 29.53 giorni.
-  function moonPhase(date) {
-    const synodicMonth = 29.530588853;
+
+  /* =====================================================================
+     Arco del sole: posizione calcolata sul tempo tra alba e tramonto (aggiornata ogni minuto)
+     ===================================================================== */
+  let sunTimes = null, sunTarget = 0;
+  const sunSpring = new Spring(0, 0.0005);
+  const hhmm = d => d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+  function fmtDur(ms) {
+    const m = Math.max(0, Math.round(ms / 60000)), h = Math.floor(m / 60);
+    return h > 0 ? h + ' h ' + String(m % 60).padStart(2, '0') + ' min' : m + ' min';
+  }
+  // t = 0..1 lungo l'arco (semicerchio di raggio 50 centrato in (60,52)): il tratto percorso e il sole seguono t
+  sunSpring.cb = (t) => {
+    const th = Math.PI * Math.max(0, Math.min(1, t));
+    document.getElementById('sun-progress').style.strokeDasharray = (Math.max(0, Math.min(1, t)) * 100).toFixed(2) + ' 100';
+    const dot = document.getElementById('sun-dot');
+    dot.setAttribute('cx', (60 - 50 * Math.cos(th)).toFixed(2));
+    dot.setAttribute('cy', (52 - 50 * Math.sin(th)).toFixed(2));
+  };
+  function updateSun() {
+    if (!sunTimes) return;
+    const now = new Date(), { rise, set, nextRise } = sunTimes;
+    let t, day = false, text;
+    if (now < rise) { t = 0; text = 'Sorge alle ' + hhmm(rise); }
+    else if (now > set) { t = 1; text = nextRise ? 'Sorge domani alle ' + hhmm(nextRise) : 'Sole tramontato'; }
+    else { t = (now - rise) / (set - rise); day = true; text = 'Luce ancora ' + fmtDur(set - now); }
+    sunTarget = t;
+    document.getElementById('sun-sub').textContent = text;
+    document.getElementById('sun-dot').style.opacity = day ? '1' : '0';
+    document.getElementById('card-sun').title = 'Alba ' + hhmm(rise) + ' \u00b7 tramonto ' + hhmm(set) + ' \u00b7 ' + fmtDur(set - rise) + ' di luce';
+    const card = document.getElementById('card-sun');
+    if (card.hidden || prefersReduced()) sunSpring.set(t);
+    else sunSpring.to(t, { damping: 1, response: 0.5 });
+  }
+  // Quando il riquadro compare, il sole "sorge" e percorre l'arco fino alla posizione attuale.
+  function sunReveal() {
+    if (prefersReduced()) { sunSpring.set(sunTarget); return; }
+    sunSpring.set(0);
+    sunSpring.to(sunTarget, { damping: 1, response: 0.9 });
+  }
+
+  // Luna: età, illuminazione e fase calcolate in locale sul ciclo sinodico medio (29,53 giorni).
+  const SYNODIC = 29.530588853;
+  function moonInfo(date) {
     const knownNewMoon = new Date('2000-01-06T18:14:00Z').getTime();
     const diffDays = (date.getTime() - knownNewMoon) / 86400000;
-    const age = ((diffDays % synodicMonth) + synodicMonth) % synodicMonth;
+    const age = ((diffDays % SYNODIC) + SYNODIC) % SYNODIC;
+    const p = age / SYNODIC;
     const names = [
       'Luna nuova', 'Luna crescente', 'Primo quarto', 'Gibbosa crescente',
       'Luna piena', 'Gibbosa calante', 'Ultimo quarto', 'Luna calante'
     ];
-    const idx = Math.floor((age / synodicMonth) * 8) % 8;
-    return names[idx];
+    return { age, p, name: names[Math.floor(p * 8) % 8], illum: (1 - Math.cos(2 * Math.PI * p)) / 2, waxing: p < 0.5 };
+  }
+  // Parte illuminata: semicerchio esterno + arco ellittico del terminatore (destra se cresce, sinistra se cala).
+  function moonPath(p) {
+    const r = 44, c = 50, rx = r * Math.abs(Math.cos(2 * Math.PI * p));
+    let s1, s2;
+    if (p < 0.5) { s1 = 1; s2 = p < 0.25 ? 0 : 1; } else { s1 = 0; s2 = p > 0.75 ? 1 : 0; }
+    return `M ${c} ${c - r} A ${r} ${r} 0 0 ${s1} ${c} ${c + r} A ${rx.toFixed(2)} ${r} 0 0 ${s2} ${c} ${c - r} Z`;
+  }
+  function renderMoon(date) {
+    const m = moonInfo(date);
+    const pct = Math.round(m.illum * 100);
+    const days = m.waxing ? (SYNODIC / 2 - m.age) : (SYNODIC - m.age);
+    const n = Math.round(days);
+    const when = n <= 0 ? 'oggi' : (n === 1 ? 'domani' : 'tra ' + n + ' giorni');
+    document.getElementById('moon-lit').setAttribute('d', moonPath(m.p));
+    document.getElementById('stat-moon').textContent = m.name;
+    document.getElementById('moon-sub').textContent = pct + '% \u00b7 ' + (m.waxing ? 'piena ' : 'nuova ') + when;
+    document.getElementById('moon-svg').setAttribute('aria-label', m.name + ', ' + pct + '% illuminata');
   }
 
   function loadRadar() {
@@ -287,12 +1054,26 @@
     document.getElementById('radar-iframe').src = src;
   }
 
-  async function loadAirQuality() {
+  // Il pallino ruota lungo l'arco da -135° (0) a +135° (100) con transform (compositor).
+  function setMarker(id, pct) {
+    document.getElementById(id).style.transform = 'rotate(' + (-135 + Math.max(0, Math.min(100, pct)) * 2.7) + 'deg)';
+  }
+  // Il dettaglio testuale non occupa più spazio nel riquadro: sta nel tooltip e per i lettori di schermo.
+  function setGauge(prefix, pct, desc) {
+    setMarker(prefix + '-marker', pct);
+    const card = document.getElementById(prefix + '-card');
+    card.dataset.desc = desc;
+    card.title = desc;
+    card.setAttribute('aria-label', desc);
+  }
+
+  async function loadAirQuality(my) {
     try {
       const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=european_aqi,pm2_5&timezone=auto`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('http ' + res.status);
       const d = await res.json();
+      if (my !== loadToken) return;
       const aqi = d.current.european_aqi;
       const pm25 = d.current.pm2_5;
       let label, sub;
@@ -301,27 +1082,114 @@
       else if (aqi <= 60) { label = 'Moderata'; sub = 'Possibile fastidio per i soggetti sensibili.'; }
       else if (aqi <= 80) { label = 'Scarsa'; sub = 'Aria inquinata: limitare l\u2019attivit\u00e0 fisica intensa all\u2019aperto.'; }
       else { label = 'Pessima'; sub = 'Aria molto inquinata: evitare l\u2019attivit\u00e0 fisica all\u2019aperto.'; }
-      document.getElementById('aqi-label').textContent = label + ' (' + Math.round(aqi) + ')';
-      document.getElementById('aqi-sub').textContent = sub + ' PM2.5: ' + Math.round(pm25) + ' \u00b5g/m\u00b3';
-      document.getElementById('aqi-marker').style.left = Math.min(aqi, 100) + '%';
+      document.getElementById('aqi-label').textContent = label;
+      document.getElementById('aqi-num').textContent = 'AQI ' + Math.round(aqi);
+      setGauge('aqi', Math.min(aqi, 100), 'Qualit\u00e0 dell\u2019aria: ' + label + ' (' + Math.round(aqi) + '). ' + sub + ' PM2.5: ' + Math.round(pm25) + ' \u00b5g/m\u00b3');
+      relevance['aqi-card'] = Math.min(100, aqi);
+      ready.aqi = true; updateCards();
     } catch (e) {
+      if (my !== loadToken) return;
       document.getElementById('aqi-label').textContent = 'Non disponibile';
-      document.getElementById('aqi-sub').textContent = '';
+      document.getElementById('aqi-num').textContent = '';
+      setGauge('aqi', 0, 'Qualit\u00e0 dell\u2019aria non disponibile');
+      relevance['aqi-card'] = 0;
+      ready.aqi = true; updateCards();
     }
   }
 
+  // Punto di rugiada (formula di Magnus): dice quanto l'aria è "appiccicosa" meglio dell'umidità relativa.
+  function dewPoint(t, rh) {
+    const g = Math.log(Math.max(rh, 1) / 100) + (17.62 * t) / (243.12 + t);
+    return (243.12 * g) / (17.62 - g);
+  }
+
+  // Tendenza della pressione (a livello del mare): variazione sulle ultime 3 ore.
+  async function loadPressure(my) {
+    const card = document.getElementById('card-pressure');
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=pressure_msl&past_days=1&forecast_days=1&timezone=auto`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('http ' + res.status);
+      const d = await res.json();
+      if (my !== loadToken) return;
+      const times = d.hourly.time, vals = d.hourly.pressure_msl;
+      const idx = findClosestHourIndex(times);
+      if (idx < 3 || vals[idx] == null || vals[idx - 3] == null) throw new Error('dati insufficienti');
+      const delta = vals[idx] - vals[idx - 3];
+
+      let icon = 'ti-minus', word = 'stabile', trend = 'flat';
+      if (delta <= -3) { icon = 'ti-arrow-down'; word = 'in forte calo'; trend = 'down'; }
+      else if (delta <= -1) { icon = 'ti-arrow-down'; word = 'in calo'; trend = 'down'; }
+      else if (delta >= 3) { icon = 'ti-arrow-up'; word = 'in forte aumento'; trend = 'up'; }
+      else if (delta >= 1) { icon = 'ti-arrow-up'; word = 'in aumento'; trend = 'up'; }
+      card.dataset.trend = trend;                // il colore compare solo se la pressione cambia davvero
+      document.getElementById('pressure-arrow').className = 'ti ' + icon;
+      document.getElementById('pressure-word').textContent = word;
+      const sign = delta > 0 ? '+' : (delta < 0 ? '\u2212' : '');
+      const detail = sign + Math.abs(delta).toFixed(1).replace('.', ',') + ' hPa in 3 h';
+      document.getElementById('pressure-detail').textContent = detail;
+      card.title = 'Pressione ' + word + ' (' + detail + ')';
+      pressureInfo = { trend, word };
+
+      // Una pressione che scende conta più di una che sale; se è stabile il riquadro resta in secondo piano.
+      relevance['card-pressure'] = Math.max(15, delta < 0 ? -delta * 25 : delta * 18);
+    } catch (e) {
+      if (my !== loadToken) return;
+      card.dataset.trend = 'flat'; card.title = '';
+      document.getElementById('pressure-word').textContent = '';
+      document.getElementById('pressure-detail').textContent = '';
+      document.getElementById('pressure-arrow').className = '';
+      relevance['card-pressure'] = 15;
+      pressureInfo = null;
+    }
+    ready.pressure = true; updateCards();
+    if (hourlyFull) renderForecast(selectedDay);
+  }
+
+  // Neve: pezzo libero dell'anello dei temporali (azzurro → blu), solo se prevista per il giorno scelto.
+  function renderSnow(dayIndex) {
+    const snowCm = (dailyFull && dailyFull.snowfall_sum) ? (dailyFull.snowfall_sum[dayIndex] || 0) : 0;
+    const on = snowCm > 0;
+    const txt = snowCm.toFixed(1).replace('.', ',');
+    document.getElementById('risk-snow').classList.toggle('on', on);
+    document.getElementById('risk-title').textContent = on ? 'Temporali \u00b7 neve' : 'Temporali \u00b7 grandine';
+    document.getElementById('risk-num').textContent = on ? '\u2744 ' + txt + ' cm' : '';
+    document.getElementById('snow-marker').style.transform = 'rotate(' + (145 + Math.min(snowCm, 15) / 15 * 70) + 'deg)';
+    const card = document.getElementById('risk-card');
+    const desc = (card.dataset.desc || 'Rischio temporali e grandine') + (on ? ' Neve prevista: ' + txt + ' cm.' : '');
+    card.title = desc; card.setAttribute('aria-label', desc);
+    if (on) relevance['risk-card'] = Math.max(relevance['risk-card'] || 0, 70);   // in inverno la neve fa salire il riquadro
+  }
+
+  // Visibilità: le colline sfumano man mano che la visibilità cala (scala logaritmica: 10 km limpido, 200 m nebbia fitta).
+  function renderVisibility(visKm) {
+    const f = visKm == null ? 0 : Math.max(0, Math.min(1, 1 - Math.log10(Math.max(visKm, 0.2) * 1000 / 200) / Math.log10(50)));
+    document.getElementById('vis-scene').style.setProperty('--f', f.toFixed(3));
+    let val = '--', word = '';
+    if (visKm != null) {
+      val = (visKm >= 10 ? String(Math.round(visKm)) : visKm.toFixed(1).replace('.', ',')) + ' km';
+      word = visKm >= 10 ? 'Ottima' : (visKm >= 4 ? 'Buona' : (visKm >= 1 ? 'Foschia' : 'Nebbia'));
+    }
+    document.getElementById('stat-visibility').textContent = val;
+    document.getElementById('stat-fog-note').textContent = word;
+  }
+
   async function loadAll() {
+    const my = ++loadToken;
+    ready.weather = false; ready.aqi = false; ready.pressure = false;
     document.getElementById('hero-cond').textContent = 'Caricamento…';
-    loadAirQuality();
+    loadAirQuality(my);
+    loadPressure(my);
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
-        `&current=temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_direction_10m` +
+        `&current=temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,pressure_msl,wind_speed_10m,wind_direction_10m` +
         `&hourly=temperature_2m,precipitation_probability,weather_code,uv_index,visibility,cape,wind_gusts_10m` +
         `&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset,uv_index_max,snowfall_sum` +
         `&timezone=auto&forecast_days=3`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('http ' + res.status);
       const d = await res.json();
+      if (my !== loadToken) return;
 
       hourlyFull = d.hourly;
       dailyFull = d.daily;
@@ -338,50 +1206,82 @@
       // UV attuale: preso dal valore orario più vicino all'ora corrente
       const nowIdx = findClosestHourIndex(d.hourly.time);
       const uvNow = (nowIdx != null && d.hourly.uv_index) ? d.hourly.uv_index[nowIdx] : null;
-      document.getElementById('stat-uv').textContent = uvNow != null ? uvNow.toFixed(1) : '--';
+      renderUV(uvNow, d.hourly);
 
       const sunriseTime = new Date(d.daily.sunrise[0]);
       const sunsetTime = new Date(d.daily.sunset[0]);
       document.getElementById('stat-sunrise').textContent = sunriseTime.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
       document.getElementById('stat-sunset').textContent = sunsetTime.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+      sunTimes = { rise: sunriseTime, set: sunsetTime, nextRise: d.daily.sunrise[1] ? new Date(d.daily.sunrise[1]) : null };
+      updateSun();
 
-      document.getElementById('stat-wind').textContent = Math.round(d.current.wind_speed_10m) + ' km/h';
-      document.getElementById('stat-wind-dir').textContent = degToCompass(d.current.wind_direction_10m);
+      const gustNow = d.hourly.wind_gusts_10m ? d.hourly.wind_gusts_10m[nowIdx] : null;
+      renderWind(d.current.wind_speed_10m, d.current.wind_direction_10m, gustNow);
 
-      document.getElementById('stat-humidity').textContent = Math.round(d.current.relative_humidity_2m) + '%';
-      document.getElementById('stat-pressure').textContent = Math.round(d.current.surface_pressure) + ' hPa';
+      // Umidità: scala centrata (il comfort sta in mezzo) + punto di rugiada
+      const rh = d.current.relative_humidity_2m;
+      const dew = dewPoint(d.current.temperature_2m, rh);
+      let humWord;
+      if (dew >= 18) humWord = 'Afosa';
+      else if (rh < 30) humWord = 'Secca';
+      else if (rh <= 60) humWord = 'Comoda';
+      else if (rh <= 75) humWord = 'Umida';
+      else humWord = 'Molto umida';
+      document.getElementById('hum-label').textContent = humWord;
+      document.getElementById('hum-num').textContent = 'Rugiada ' + Math.round(dew) + '\u00b0';
+      setGauge('hum', rh, 'Umidit\u00e0: ' + humWord + ' (' + Math.round(rh) + '%). Punto di rugiada ' + Math.round(dew) + '\u00b0.');
+      relevance['hum-card'] = Math.max(20, Math.min(100, Math.abs(rh - 45) * 2.2), dew >= 18 ? 80 : 0);
 
-      const moon = moonPhase(new Date());
-      document.getElementById('stat-moon').textContent = moon;
+      const pMsl = d.current.pressure_msl;     // pressione ridotta al livello del mare (il riferimento "1013 hPa")
+      document.getElementById('stat-pressure').textContent = Math.round(pMsl);
+      setMarker('press-marker', (pMsl - 980) / 60 * 100);
+
+      renderMoon(new Date());
+
+      // rilevanza per la vista compatta
+      relevance['uv-card'] = uvNow != null ? Math.min(100, uvNow * 12) : 0;
+      relevance['card-wind'] = Math.min(100, d.current.wind_speed_10m * 2.5);
+      const nowT = new Date();
+      relevance['card-moon'] = (nowT < sunriseTime || nowT > sunsetTime) ? 45 : 5;
+      ready.weather = true;
 
       loadRadar();
       buildDaysRow();
       selectedDay = 0;
       renderDay(0);
     } catch (e) {
+      if (my !== loadToken) return;
       document.getElementById('hero-cond').textContent = 'Dati non disponibili al momento';
     }
   }
 
   function buildDaysRow() {
     const dates = dailyFull.time;
-    const row = dates.map((dateStr, i) => {
+    pill.style.width = `calc(100% / ${dates.length})`;
+    tabsEl.innerHTML = dates.map((dateStr, i) => {
       const [icon] = wmoInfo(dailyFull.weather_code[i]);
       const label = DAY_LABELS[i] || dateStr;
-      return `<div class="day-tab ${i === 0 ? 'active' : ''}" data-day="${i}" onclick="renderDay(${i})">
+      return `<button type="button" role="tab" class="day-tab ${i === 0 ? 'active' : ''}" data-day="${i}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">
         <div class="dname">${label}</div>
         <i class="ti ${icon}" aria-hidden="true"></i>
         <div class="drange"><b>${Math.round(dailyFull.temperature_2m_max[i])}°</b> / ${Math.round(dailyFull.temperature_2m_min[i])}°</div>
-      </div>`;
+      </button>`;
     }).join('');
-    document.getElementById('days-row').innerHTML = row;
+    // Reset pulito di ogni movimento in corso
+    xSpring.stop(); pillSpring.stop(); phase = 0; swapInfo = null;
+    xSpring.x = 0; xSpring.v = 0; applyOffset(0);
+    pillSpring.set(0);
   }
 
   function renderDay(dayIndex) {
     selectedDay = dayIndex;
     document.querySelectorAll('.day-tab').forEach(el => {
-      el.classList.toggle('active', parseInt(el.dataset.day) === dayIndex);
+      const on = parseInt(el.dataset.day, 10) === dayIndex;
+      el.classList.toggle('active', on);
+      el.setAttribute('aria-selected', String(on));
+      el.tabIndex = on ? 0 : -1;
     });
+    document.getElementById('ctitle-day').textContent = DAY_LABELS[dayIndex] ? ' · ' + DAY_LABELS[dayIndex] : '';
 
     const times = hourlyFull.time;
     const temps = hourlyFull.temperature_2m;
@@ -391,7 +1291,6 @@
     const startIdx = dayIndex * 24;
     const endIdx = Math.min(startIdx + 24, times.length);
 
-    const cols = [];
     const chartLabels = [];
     const chartTemps = [];
     const chartRains = [];
@@ -408,14 +1307,8 @@
     }
     drawChart(chartLabels, chartTemps, chartRains, currentHourIndex);
 
-    // Neve prevista per il giorno selezionato (accumulo giornaliero)
-    if (dailyFull && dailyFull.snowfall_sum) {
-      const snowCm = dailyFull.snowfall_sum[dayIndex];
-      document.getElementById('stat-snow').textContent = snowCm > 0 ? snowCm.toFixed(1) + ' cm' : 'Nessuna';
-      document.getElementById('stat-snow-sub').textContent = dayIndex === 0 ? 'oggi' : (DAY_LABELS[dayIndex] || '').toLowerCase();
-    }
-
     // Visibilità: presa dall'ora corrente se è il giorno di oggi, altrimenti media del giorno
+    let visKmRel = null;
     if (hourlyFull.visibility) {
       let visMeters;
       if (dayIndex === 0) {
@@ -427,8 +1320,8 @@
       }
       if (visMeters != null) {
         const visKm = visMeters / 1000;
-        document.getElementById('stat-visibility').textContent = visKm.toFixed(1) + ' km';
-        document.getElementById('stat-fog-note').textContent = visKm < 1 ? 'Nebbia fitta' : (visKm < 4 ? 'Foschia/nebbia possibile' : '');
+        visKmRel = visKm;
+        renderVisibility(visKm);
       }
     }
     // Rischio temporali/grandine per il giorno selezionato:
@@ -451,15 +1344,210 @@
       else { label = 'Alto'; sub = hasHailCode ? 'Condizioni favorevoli a temporali forti, possibile grandine.' : 'Forte instabilità atmosferica: temporali probabili.'; }
 
       document.getElementById('risk-label').textContent = label;
-      document.getElementById('risk-sub').textContent = sub;
-      document.getElementById('risk-marker').style.left = score + '%';
+      setGauge('risk', score, 'Rischio temporali e grandine: ' + label + '. ' + sub);
+      relevance['risk-card'] = score;
+    }
+
+    // Neve: vive nel pezzo libero dell'anello dei temporali (e ne fa salire la rilevanza)
+    renderSnow(dayIndex);
+
+    // Visibilità: rilevante solo con foschia o nebbia
+    let vr = 10;
+    if (visKmRel != null) vr = visKmRel < 1 ? 90 : (visKmRel < 4 ? 60 : 10);
+    relevance['card-visibility'] = vr;
+    renderForecast(dayIndex);
+    updateCards();
+  }
+
+
+  /* =====================================================================
+     Previsione sintetica: testo costruito con regole fisse dai dati orari
+     (nessuna IA, nessuna richiesta in più). Priorità: temporali > cielo > pioggia/neve > temperature > note.
+     ===================================================================== */
+  const RAIN_CODES = new Set([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82]);
+  const SNOW_CODES = new Set([71, 73, 75, 77, 85, 86]);
+  const SKY_WORD = { clear: 'sereno', partly: 'parzialmente nuvoloso', cloudy: 'nuvoloso', fog: 'nebbia' };
+  const SKY_SEV = { clear: 0, partly: 1, cloudy: 2, fog: 3 };
+  const PARTS = [
+    { k: 0, a: 6, b: 12 },    // mattina
+    { k: 1, a: 12, b: 18 },   // pomeriggio
+    { k: 2, a: 18, b: 24 }    // sera
+  ];
+  const AT = { 0: 'al mattino', 1: 'nel pomeriggio', 2: 'in serata', 3: 'nella notte' };
+  const capital = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+  function skyCat(code) {
+    if (code === 0 || code === 1) return 'clear';
+    if (code === 2) return 'partly';
+    if (code === 45 || code === 48) return 'fog';
+    return 'cloudy';                       // nuvoloso, pioggia, neve, temporale: il cielo è coperto
+  }
+
+  function buildForecast(dayIndex) {
+    const T = hourlyFull, base = dayIndex * 24;
+    const nowH = dayIndex === 0 ? new Date().getHours() : 0;
+    const hours = [];
+    for (let h = nowH; h < 24; h++) if (base + h < T.time.length) hours.push(h);
+    if (!hours.length) return [];
+
+    const code = h => { const c = T.weather_code[base + h]; return c == null ? 3 : c; };
+    const prob = h => T.precipitation_probability[base + h] || 0;
+
+    // --- fasce del giorno (per oggi solo quelle che restano) ---
+    let parts = PARTS.map(p => ({ k: p.k, hrs: hours.filter(h => h >= p.a && h < p.b) })).filter(p => p.hrs.length >= 2);
+    if (!parts.length) parts = [{ k: 3, hrs: hours }];
+    parts.forEach(p => {
+      const c = {};
+      p.hrs.forEach(h => { const s = skyCat(code(h)); c[s] = (c[s] || 0) + 1; });
+      p.cat = Object.keys(c).sort((x, y) => c[y] - c[x] || SKY_SEV[y] - SKY_SEV[x])[0];
+    });
+    const groups = [];
+    parts.forEach(p => {
+      const g = groups[groups.length - 1];
+      if (g && g.cat === p.cat) g.end = p.k; else groups.push({ cat: p.cat, start: p.k, end: p.k });
+    });
+
+    let head;
+    if (groups.length === 1) {
+      head = SKY_WORD[groups[0].cat] + (parts.length === 1 ? ' ' + AT[parts[0].k]
+        : (dayIndex === 0 ? ' per il resto della giornata' : ' per tutta la giornata'));
+    } else if (groups.length === 2) {
+      const [a, b] = groups;
+      const endA = a.end === 0 ? 'fino a metà giornata' : 'fino al tardo pomeriggio';
+      const fromB = b.start === 1 ? 'dal pomeriggio' : 'in serata';
+      head = SKY_WORD[a.cat] + ' ' + endA + ', poi ' + SKY_WORD[b.cat] + ' ' + fromB;
+    } else {
+      const a = groups[0], z = groups[groups.length - 1];
+      head = 'cielo variabile: ' + SKY_WORD[a.cat] + ' ' + AT[a.start] + ', ' + SKY_WORD[z.cat] + ' ' + AT[z.start];
+    }
+
+    // --- precipitazioni / temporali / neve ---
+    const fmt = x => (x === 0 || x === 24) ? 'mezzanotte' : 'le ' + x;
+    const range = hs => {
+      const a = hs[0], e = hs[hs.length - 1] + 1;
+      if (e - a >= 14) return 'per gran parte della giornata';
+      if (e - a <= 1) return 'intorno alle ' + a;
+      return 'tra ' + fmt(a) + ' e ' + fmt(e);
+    };
+    const stormHrs = hours.filter(h => code(h) >= 95);
+    const rainHrs = hours.filter(h => RAIN_CODES.has(code(h)) || prob(h) >= 50);
+    const snowHrs = hours.filter(h => SNOW_CODES.has(code(h)));
+    const snowDay = (dailyFull && dailyFull.snowfall_sum) ? dailyFull.snowfall_sum[dayIndex] : 0;
+
+    let storm = null;
+    if (stormHrs.length) {
+      const hail = stormHrs.some(h => code(h) === 96 || code(h) === 99);
+      storm = 'Temporali ' + range(stormHrs) + (hail ? ', possibile grandine' : '');
+    } else if ((relevance['risk-card'] || 0) >= 60 && T.cape) {
+      let best = hours[0];
+      hours.forEach(h => { if ((T.cape[base + h] || 0) > (T.cape[base + best] || 0)) best = h; });
+      storm = 'Rischio temporali elevato ' + (best < 12 ? 'al mattino' : (best < 18 ? 'nel pomeriggio' : 'in serata'));
+    }
+    let rain = null;
+    if (!storm && rainHrs.length) {
+      const p = Math.max(...rainHrs.map(prob));
+      const real = rainHrs.some(h => RAIN_CODES.has(code(h)));
+      const heavy = rainHrs.some(h => code(h) === 65 || code(h) === 82);
+      rain = (heavy ? 'Pioggia intensa' : (real ? 'Pioggia' : 'Possibile pioggia')) + ' ' + range(rainHrs) + ' (' + p + '%)';
+    }
+    let snow = null;
+    if (snowDay > 0) snow = 'Neve prevista (' + snowDay.toFixed(1).replace('.', ',') + ' cm)';
+    else if (snowHrs.length) snow = 'Neve ' + range(snowHrs);
+
+    // --- temperature (sull'intera giornata) ---
+    let iMax = 0, iMin = 0;
+    for (let h = 0; h < 24 && base + h < T.time.length; h++) {
+      if (T.temperature_2m[base + h] > T.temperature_2m[base + iMax]) iMax = h;
+      if (T.temperature_2m[base + h] < T.temperature_2m[base + iMin]) iMin = h;
+    }
+    const temps = 'Massima ' + Math.round(T.temperature_2m[base + iMax]) + '° verso le ' + iMax +
+      ', minima ' + Math.round(T.temperature_2m[base + iMin]) + '°' + ((iMin >= 3 && iMin <= 8) ? ' all\u2019alba' : '');
+
+    // --- note (al massimo due, per priorità) ---
+    const notes = [];
+    const gust = Math.max(...hours.map(h => T.wind_gusts_10m ? (T.wind_gusts_10m[base + h] || 0) : 0));
+    if (gust >= 60) notes.push('Vento forte, raffiche fino a ' + Math.round(gust) + ' km/h');
+    else if (gust >= 40) notes.push('Raffiche fino a ' + Math.round(gust) + ' km/h');
+    const uv = Math.max(...hours.map(h => T.uv_index ? (T.uv_index[base + h] || 0) : 0));
+    if (uv >= 8) notes.push('Indice UV molto alto');
+    else if (uv >= 6) notes.push('Indice UV alto');
+    if (dayIndex === 0 && pressureInfo && pressureInfo.trend === 'down') notes.push('Pressione ' + pressureInfo.word);
+
+    const out = [];
+    if (storm) out.push({ t: storm, strong: true });
+    out.push({ t: capital(head) });
+    if (rain) out.push({ t: rain });
+    if (snow) out.push({ t: snow });
+    out.push({ t: temps });
+    notes.slice(0, 2).forEach(n => out.push({ t: n }));
+    return out;
+  }
+
+  function renderForecast(dayIndex) {
+    const el = document.getElementById('forecast');
+    const parts = buildForecast(dayIndex);
+    const key = parts.map(p => (p.strong ? '!' : '') + p.t).join('|');
+    if (el.dataset.key === key) return;        // nessun cambiamento: nessuna animazione
+    const first = !el.dataset.key;
+    el.dataset.key = key;
+    el.textContent = '';
+    parts.forEach(p => {
+      const s = document.createElement(p.strong ? 'strong' : 'span');
+      s.textContent = p.t + '. ';
+      el.appendChild(s);
+    });
+    if (!first && !prefersReduced()) {
+      el.classList.remove('fade-in'); void el.offsetWidth; el.classList.add('fade-in');
     }
   }
+
+  /* =====================================================================
+     Vista essenziale: i 4 riquadri più utili adesso, il resto a richiesta
+     ===================================================================== */
+  const moreBtn = document.getElementById('more-btn');
+  // Vista compatta: sempre righe piene.
+  // Telefono (anche in orizzontale) = 2 colonne → 4 (2×2); monitor largo = 3 colonne × 2 righe → 6; in mezzo = 1 riga → 3.
+  const phoneMq = window.matchMedia('(max-width: 640px), (max-height: 500px) and (orientation: landscape)');
+  const xlMq = window.matchMedia('(min-width: 1000px)');
+  const xxlMq = window.matchMedia('(min-width: 1600px)');   // 3 colonne: c'è posto per tutti i 9 riquadri
+  const compactCount = () => (phoneMq.matches ? 4 : (xxlMq.matches ? 9 : (xlMq.matches ? 6 : 3)));
+  phoneMq.addEventListener('change', () => updateCards());
+  xlMq.addEventListener('change', () => updateCards());
+  xxlMq.addEventListener('change', () => updateCards());
+  function updateCards() {
+    if (!ready.weather || !ready.aqi || !ready.pressure) return;   // niente scelte a dati incompleti
+    document.getElementById('stats-grid').classList.toggle('expanded', showAll);
+    const ids = Object.keys(relevance);
+    const top = new Set(ids.map((id, i) => ({ id, i, s: relevance[id] }))
+      .sort((a, b) => b.s - a.s || a.i - b.i).slice(0, compactCount()).map(o => o.id));
+    let n = 0;
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      const visible = showAll || top.has(id);
+      const was = !el.hidden;
+      el.hidden = !visible;
+      if (visible && !was && id === 'card-sun') sunReveal();
+      if (visible && !was && !prefersReduced()) {
+        el.classList.remove('card-enter');
+        void el.offsetWidth;                      // riavvia l'animazione
+        el.style.setProperty('--d', (n++ * 45) + 'ms');
+        el.classList.add('card-enter');
+        el.addEventListener('animationend', () => el.classList.remove('card-enter'), { once: true });
+      }
+    });
+    document.getElementById('more-wrap').hidden = false;
+  }
+  moreBtn.addEventListener('click', () => {
+    showAll = !showAll;
+    moreBtn.setAttribute('aria-expanded', String(showAll));
+    document.getElementById('more-label').textContent = showAll ? 'Meno dettagli' : 'Tutti i dettagli';
+    updateCards();
+  });
 
   const currentTimeLinePlugin = {
     id: 'currentTimeLine',
     afterDraw(chart) {
-      const idx = chart.config._currentHourIndex;
+      const idx = currentHourIdx;
       if (idx == null) return;
       const { ctx, chartArea, scales } = chart;
       const x = scales.x.getPixelForValue(idx);
@@ -475,35 +1563,79 @@
     }
   };
 
-  function drawChart(labels, temps, rains, currentHourIndex) {
-    const ctx = document.getElementById('tempChart');
-    if (chartInstance) chartInstance.destroy();
-    chartInstance = new Chart(ctx, {
-      data: {
-        labels: labels,
-        datasets: [
-          { type: 'line', label: 'Temperatura', data: temps, borderColor: '#0071e3', backgroundColor: 'rgba(0,113,227,0.08)', fill: true, borderWidth: 2, pointRadius: 0, yAxisID: 'y', tension: 0.35 },
-          { type: 'bar', label: 'Pioggia', data: rains, backgroundColor: 'rgba(0,113,227,0.15)', borderRadius: 4, yAxisID: 'y1', barPercentage: 0.5 }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        scales: {
-          y: { position: 'left', ticks: { callback: v => v + '°', color: '#898781', font: { size: 11 } }, grid: { display: false } },
-          y1: { position: 'right', min: 0, max: 100, ticks: { callback: v => v + '%', color: '#898781', font: { size: 11 } }, grid: { display: false } },
-          x: { grid: { display: false }, ticks: { color: '#898781', font: { size: 10 }, maxTicksLimit: 8 } }
-        },
-        plugins: { legend: { display: false } }
-      },
-      plugins: [currentTimeLinePlugin]
-    });
-    chartInstance.config._currentHourIndex = currentHourIndex;
-    chartInstance.update();
+  // I colori del grafico seguono i token CSS (chiaro/scuro).
+  function themeColors() {
+    const s = getComputedStyle(document.documentElement);
+    return { blue: s.getPropertyValue('--blue').trim(), tick: s.getPropertyValue('--text-3').trim() };
   }
 
-  useMyLocation();
-  loadAll();
+  function drawChart(labels, temps, rains, currentHourIndex) {
+    const c = themeColors();
+    currentHourIdx = currentHourIndex;
+    if (!chartInstance) {
+      chartInstance = new Chart(document.getElementById('tempChart'), {
+        data: {
+          labels: labels,
+          datasets: [
+            { type: 'line', label: 'Temperatura', data: temps, borderColor: c.blue, backgroundColor: c.blue + '14', fill: true, borderWidth: 2, pointRadius: 0, yAxisID: 'y', tension: 0.35 },
+            { type: 'bar', label: 'Pioggia', data: rains, backgroundColor: c.blue + '26', borderRadius: 4, yAxisID: 'y1', barPercentage: 0.5 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          animation: prefersReduced() ? false : { duration: 500 },
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            y: { position: 'left', ticks: { callback: v => v + '°', color: c.tick, font: { size: 11 } }, grid: { display: false } },
+            y1: { position: 'right', min: 0, max: 100, ticks: { callback: v => v + '%', color: c.tick, font: { size: 11 } }, grid: { display: false } },
+            x: { grid: { display: false }, ticks: { color: c.tick, font: { size: 10 }, maxTicksLimit: 8 } }
+          },
+          plugins: { legend: { display: false } }
+        },
+        plugins: [currentTimeLinePlugin]
+      });
+      return;
+    }
+    // Cambio giorno: stesso grafico, nuovi dati. Il movimento lo porta lo slide, non il grafico.
+    chartInstance.data.labels = labels;
+    const [line, bar] = chartInstance.data.datasets;
+    line.data = temps; line.borderColor = c.blue; line.backgroundColor = c.blue + '14';
+    bar.data = rains; bar.backgroundColor = c.blue + '26';
+    const sc = chartInstance.options.scales;
+    sc.y.ticks.color = sc.y1.ticks.color = sc.x.ticks.color = c.tick;
+    chartInstance.update('none');
+  }
+
+  /* =====================================================================
+     Tema: scelta manuale chiaro / scuro (nessun automatismo)
+     ===================================================================== */
+  const THEME_KEY = 'meteo-theme';
+  const themeSeg = document.getElementById('theme-seg');
+
+  function applyTheme(theme, save) {
+    document.documentElement.dataset.theme = theme;
+    themeSeg.dataset.active = theme;
+    themeSeg.querySelectorAll('.theme-opt').forEach(b => b.setAttribute('aria-checked', String(b.dataset.theme === theme)));
+    document.querySelector('meta[name="color-scheme"]').content = theme;
+    document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#000000' : '#f5f5f7';
+    if (save) { try { localStorage.setItem(THEME_KEY, theme); } catch (_) {} }
+    if (hourlyFull) renderDay(selectedDay); // il grafico rilegge i colori dai token
+  }
+  themeSeg.addEventListener('click', (e) => {
+    const b = e.target.closest('.theme-opt');
+    if (b && b.dataset.theme !== document.documentElement.dataset.theme) applyTheme(b.dataset.theme, true);
+  });
+  themeSeg.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const t = e.key === 'ArrowRight' ? 'dark' : 'light';
+    applyTheme(t, true);
+    themeSeg.querySelector(`.theme-opt[data-theme="${t}"]`).focus();
+  });
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light', false);
+
+  setInterval(updateSun, 60000);
+  useMyLocation(true);
   setTimeout(() => location.reload(), 20 * 60 * 1000);
 </script>
 </body>
