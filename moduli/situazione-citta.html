@@ -467,7 +467,7 @@
   .search-btn[hidden] { display: none; }
   .search-btn::after { content: ''; position: absolute; inset: -4px; }
   .search-btn:active { transform: scale(0.88); transition-duration: 0.08s; }
-  #city-locate { color: var(--blue); }
+  #city-locate { color: #fff; background: var(--blue); box-shadow: 0 1px 4px rgba(0,113,227,0.35); }
   .search-list {
     position: absolute; left: 0; right: 0; top: calc(100% + 8px); z-index: 30; margin: 0; padding: 6px; list-style: none;
     background: var(--surface); border-radius: 18px; box-shadow: var(--shadow-lg);
@@ -484,7 +484,7 @@
   .search-list li.active { background: var(--seg); }
   .search-list li.hdr { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); padding: 0.5rem 0.75rem 0.25rem; }
   .search-list li.msg { font-size: 0.8125rem; color: var(--text-2); }
-  @media (hover: hover) and (pointer: fine) { .search-list li[role="option"]:hover { background: var(--seg); } .search-btn:hover { color: var(--text); } #city-locate:hover { color: var(--blue); opacity: 0.8; } }
+  @media (hover: hover) and (pointer: fine) { .search-list li[role="option"]:hover { background: var(--seg); } .search-btn:hover { color: var(--text); } #city-locate:hover { color: #fff; opacity: 0.85; } }
   @media (max-width: 520px) {
     .back-label { display: none; }
     .nav { padding: 8px 12px; }
@@ -563,7 +563,7 @@
 
   <div class="hero">
     <p class="place" id="place-name">&hellip;</p>
-    <p class="updated">Ora locale <span id="updated-time">&hellip;</span></p>
+    <p class="updated">Ora locale <span id="updated-time">&hellip;</span><span id="elev-wrap" hidden> &middot; Altitudine <span id="elev"></span></span></p>
     <i class="ti ti-cloud icon-big" id="hero-icon" aria-hidden="true"></i>
     <p class="temp-big" id="hero-temp">&hellip;</p>
     <p class="cond" id="hero-cond">Caricamento&hellip;</p>
@@ -697,6 +697,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
   let LAT = 0, LON = 0;
+  let cityElev = null;   // altitudine (m) dalla ricerca; se assente si usa quella della risposta meteo
   let PLACE_NAME = '';
   // Orologio del luogo cercato: un Date le cui componenti "locali" coincidono con l'ora della città
   // (così confronti con le ore delle previsioni, alba/tramonto ecc. restano coerenti anche se la città è in un altro fuso).
@@ -1259,6 +1260,11 @@
       if (!res.ok) throw new Error('http ' + res.status);
       const d = await res.json();
       if (my !== loadToken) return;
+      const elevM = (typeof cityElev === 'number') ? cityElev : d.elevation;
+      if (typeof elevM === 'number' && isFinite(elevM)) {
+        document.getElementById('elev').textContent = Math.round(elevM).toLocaleString('it-IT') + ' m s.l.m.';
+        document.getElementById('elev-wrap').hidden = false;
+      }
       if (typeof d.utc_offset_seconds === 'number') setClock(d.utc_offset_seconds);
       else if (d.current && d.current.time) clockSkew = new Date(d.current.time).getTime() - Date.now();
 
@@ -1718,6 +1724,8 @@
 
   function selectCity(city) {
     LAT = city.lat; LON = city.lon; PLACE_NAME = city.label;
+    cityElev = typeof city.elev === 'number' ? city.elev : null;
+    document.getElementById('elev-wrap').hidden = true;
     hasCity = true; pressureInfo = null;
     $('place-name').textContent = city.label;
     $('welcome').hidden = true;
@@ -1771,7 +1779,8 @@
   const toCity = r => {
     const region = (r.admin1 && r.admin1 !== r.name) ? r.admin1 : null;
     const sub = [region, r.country].filter(Boolean).join(', ');
-    return { name: r.name, sub, label: sub ? r.name + ', ' + sub : r.name, lat: r.latitude, lon: r.longitude };
+    return { name: r.name, sub, label: sub ? r.name + ', ' + sub : r.name, lat: r.latitude, lon: r.longitude,
+             elev: typeof r.elevation === 'number' ? r.elevation : null };
   };
   async function search(q, autoPick) {
     const my = ++searchToken;
