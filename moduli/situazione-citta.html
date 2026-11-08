@@ -497,6 +497,64 @@
   .welcome h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 6px; color: var(--text); }
   .welcome p { margin: 0 auto; max-width: 24rem; font-size: 0.9375rem; line-height: 1.45; }
 
+  /* ---------- Schede di dettaglio (si aprono toccando un riquadro) ---------- */
+  .stat-card { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background-color 0.4s ease, transform 0.18s ease; }
+  .stat-card:active { transform: scale(0.97); }
+  .stat-card:focus-visible { outline-offset: 3px; }
+
+  body.sheet-open { overflow: hidden; }
+  .sheet-backdrop {
+    position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-end; justify-content: center;
+    background: rgba(0,0,0,0); transition: background-color 0.3s ease;
+  }
+  .sheet-backdrop[hidden] { display: none; }
+  .sheet-backdrop.open { background: rgba(0,0,0,0.38); }
+  .sheet {
+    position: relative; width: min(100%, 30rem); max-height: 88vh; max-height: 88dvh;
+    display: flex; flex-direction: column; outline: none;
+    background: var(--bg); color: var(--text); border-radius: 28px 28px 0 0;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.25); padding-bottom: env(safe-area-inset-bottom);
+    transform: translateY(100%); transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .sheet-backdrop.open .sheet { transform: none; }
+  @media (min-width: 641px) {
+    .sheet-backdrop { align-items: center; }
+    .sheet { border-radius: 28px; max-height: 80vh; max-height: 80dvh; padding-bottom: 0; opacity: 0; transform: scale(0.96);
+             transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease; }
+    .sheet-backdrop.open .sheet { opacity: 1; transform: none; }
+    .sheet-grab { display: none; }
+    .sheet-head { padding-top: 18px; }
+  }
+  .sheet-head { flex: 0 0 auto; padding: 8px 16px 10px; touch-action: none; }
+  .sheet-grab { width: 36px; height: 5px; border-radius: 3px; background: var(--sep); margin: 0 auto 10px; }
+  .sheet-bar { display: flex; align-items: center; gap: 10px; }
+  .sheet-bar h2 { flex: 1; min-width: 0; margin: 0; font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.01em; }
+  .sheet .icon-badge { width: 28px; height: 28px; border-radius: 9px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; color: #fff; }
+  .sheet .icon-badge svg { display: block; }
+  .sheet-close {
+    position: relative; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; flex: 0 0 auto;
+    background: var(--seg); color: var(--text-2); display: flex; align-items: center; justify-content: center; font-size: 1rem;
+  }
+  .sheet-close::after { content: ''; position: absolute; inset: -7px; }
+  .sheet-body { overflow-y: auto; overscroll-behavior: contain; padding: 4px 16px 24px; }
+  .sheet-hero { text-align: center; padding: 6px 0 14px; }
+  .sheet-moon { display: block; margin: 0 auto 8px; }
+  .sheet-value { margin: 0; font-size: 2.5rem; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; }
+  .sheet-word { margin: 4px 0 0; font-size: 1.0625rem; font-weight: 500; }
+  .sheet-sub { margin: 2px 0 0; font-size: 0.8125rem; color: var(--text-3); }
+  .sheet-gtitle { margin: 16px 8px 6px; font-size: 0.6875rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-3); }
+  .sheet-list { background: var(--surface); border-radius: 18px; overflow: hidden; margin-top: 8px; }
+  .sheet-gtitle + .sheet-list { margin-top: 0; }
+  .sheet-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 12px 16px; font-size: 0.9375rem; }
+  .sheet-row + .sheet-row { border-top: 0.5px solid var(--sep); }
+  .sheet-k { color: var(--text-2); }
+  .sheet-v { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .sheet-note { margin: 12px 8px 0; font-size: 0.8125rem; line-height: 1.45; color: var(--text-3); }
+  @media (prefers-reduced-motion: reduce) {
+    .sheet, .sheet-backdrop { transition: none; }
+    .stat-card:active { transform: none; opacity: 0.7; }
+  }
+
   /* ---------- Accessibilità ---------- */
   @media (prefers-reduced-motion: reduce) {
     .card-enter, .forecast.fade-in, .search-list { animation: none; }
@@ -694,6 +752,20 @@
 
 </div>
 
+<div class="sheet-backdrop" id="sheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" tabindex="-1">
+    <div class="sheet-head" id="sheet-head">
+      <div class="sheet-grab" aria-hidden="true"></div>
+      <div class="sheet-bar">
+        <span class="icon-badge" id="sheet-badge" aria-hidden="true"></span>
+        <h2 id="sheet-title"></h2>
+        <button type="button" class="sheet-close" id="sheet-close" aria-label="Chiudi"><i class="ti ti-x" aria-hidden="true"></i></button>
+      </div>
+    </div>
+    <div class="sheet-body" id="sheet-body"></div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
   let LAT = 0, LON = 0;
@@ -710,6 +782,8 @@
   let chartInstance = null;
   let currentHourIdx = null;
   let pressureInfo = null;       // tendenza della pressione (solo per la previsione di oggi)
+  // Dati per le schede di dettaglio (riempiti dal caricamento, letti al tocco di un riquadro)
+  let currentData = null, riskInfo = null, aqiDetail = null, pressureDetail = null;
   let loadToken = 0;            // scarta le risposte di caricamenti ormai superati
 
   // Rilevanza dei riquadri: in vista compatta ne mostriamo i più utili adesso (da 3 a 9 secondo lo spazio).
@@ -965,6 +1039,58 @@
   /* =====================================================================
      Geolocalizzazione e dati
      ===================================================================== */
+  /* =====================================================================
+     Invio della propria posizione (uso personale)
+     Attivo SOLO sul dispositivo dove l'hai configurato: apri la pagina UNA volta con
+       ...situazione-citta.html?notify=NOME-LUNGO-E-SEGRETO
+     (16-64 caratteri: lettere, numeri, - o _). Il nome viene salvato nel browser e tolto dall'indirizzo;
+     ?notify=off lo disattiva. Senza configurazione non viene inviato nulla.
+     Ricevi la notifica con l'app ntfy (iOS/Android/web) iscrivendoti allo stesso nome.
+     ===================================================================== */
+  const NOTIFY_KEY = 'situazione-citta:notify';
+  const NOTIFY_URL = 'https://ntfy.sh';
+  const notifyTopic = () => { try { return localStorage.getItem(NOTIFY_KEY); } catch (_) { return null; } };
+  function notifySend(payload) {
+    const topic = notifyTopic();
+    if (!topic) return Promise.resolve(false);
+    return fetch(NOTIFY_URL, { method: 'POST', body: JSON.stringify(Object.assign({ topic }, payload)) })
+      .then(r => r.ok).catch(() => false);
+  }
+  (function readNotifyParam() {
+    try {
+      const p = new URLSearchParams(location.search);
+      if (!p.has('notify')) return;
+      const v = (p.get('notify') || '').trim();
+      p.delete('notify');
+      const qs = p.toString();
+      history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);   // il nome non resta nella barra/cronologia
+      if (!v || v.toLowerCase() === 'off') {
+        localStorage.removeItem(NOTIFY_KEY);
+        alert('Invio della posizione disattivato su questo dispositivo.');
+      } else if (!/^[A-Za-z0-9_-]{16,64}$/.test(v)) {
+        alert('Nome non valido: servono 16-64 caratteri tra lettere, numeri, - e _ (un nome corto sarebbe indovinabile da chiunque).');
+      } else {
+        localStorage.setItem(NOTIFY_KEY, v);
+        notifySend({ title: 'Weather Commander', message: 'Invio posizione attivato su questo dispositivo.', tags: ['white_check_mark'] });
+        alert('Invio della posizione attivato su questo dispositivo. Dovresti ricevere una notifica di prova.');
+      }
+    } catch (_) {}
+  })();
+  let lastNotified = { key: '', t: 0 };
+  function notifyPosition(lat, lon, name, accuracy) {
+    if (!notifyTopic()) return;
+    const key = lat.toFixed(4) + ',' + lon.toFixed(4);
+    if (key === lastNotified.key && Date.now() - lastNotified.t < 5 * 60 * 1000) return;   // niente doppioni se tocchi più volte
+    lastNotified = { key, t: Date.now() };
+    const coords = lat.toFixed(5) + ', ' + lon.toFixed(5);
+    notifySend({
+      title: 'Posizione: ' + name,
+      message: coords + (accuracy ? ' (±' + Math.round(accuracy) + ' m)' : ''),
+      tags: ['round_pushpin'],
+      click: 'https://maps.google.com/?q=' + lat.toFixed(5) + ',' + lon.toFixed(5)
+    });
+  }
+
   function useMyLocation() {
     const status = document.getElementById('geo-status');
     if (!navigator.geolocation) {
@@ -981,6 +1107,7 @@
         name = revData.city || revData.locality || name;
         sub = [revData.principalSubdivision, revData.countryName].filter(Boolean).join(', ');
       } catch (e) {}
+      notifyPosition(lat, lon, name, pos.coords.accuracy);
       selectCity({ name, sub, label: sub ? name + ', ' + sub : name, lat, lon });
     }, (err) => {
       status.textContent = err.code === 1 ? 'Permesso di posizione negato.' : 'Posizione non disponibile.';
@@ -1145,6 +1272,8 @@
       if (my !== loadToken) return;
       const aqi = d.current.european_aqi;
       const pm25 = d.current.pm2_5;
+      aqiDetail = { aqi, pm2_5: pm25, pollutants: null };
+      loadAirDetail(my);
       let label, sub;
       if (aqi <= 20) { label = 'Buona'; sub = 'Aria pulita, nessun problema.'; }
       else if (aqi <= 40) { label = 'Discreta'; sub = 'Qualit\u00e0 dell\u2019aria accettabile.'; }
@@ -1158,12 +1287,33 @@
       ready.aqi = true; updateCards();
     } catch (e) {
       if (my !== loadToken) return;
+      aqiDetail = null;
       document.getElementById('aqi-label').textContent = 'Non disponibile';
       document.getElementById('aqi-num').textContent = '';
       setGauge('aqi', 0, 'Qualit\u00e0 dell\u2019aria non disponibile');
       relevance['aqi-card'] = 0;
       ready.aqi = true; updateCards();
     }
+  }
+
+  const POLL = [
+    { key: 'pm2_5', idx: 'european_aqi_pm2_5', name: 'PM2,5', unit: 'µg/m³' },
+    { key: 'pm10', idx: 'european_aqi_pm10', name: 'PM10', unit: 'µg/m³' },
+    { key: 'nitrogen_dioxide', idx: 'european_aqi_nitrogen_dioxide', name: 'NO₂', unit: 'µg/m³' },
+    { key: 'ozone', idx: 'european_aqi_ozone', name: 'O₃', unit: 'µg/m³' },
+    { key: 'sulphur_dioxide', idx: 'european_aqi_sulphur_dioxide', name: 'SO₂', unit: 'µg/m³' }
+  ];
+  // Richiesta separata: se un inquinante manca o la richiesta fallisce, il riquadro resta com'è.
+  async function loadAirDetail(my) {
+    try {
+      const vars = POLL.map(p => p.key).concat(POLL.map(p => p.idx)).join(',');
+      const res = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=${vars}&timezone=auto`);
+      if (!res.ok) throw new Error('http ' + res.status);
+      const d = await res.json();
+      if (my !== loadToken || !aqiDetail) return;
+      aqiDetail.pollutants = POLL.map(p => ({ name: p.name, unit: p.unit, conc: d.current[p.key], idx: d.current[p.idx] }))
+        .filter(p => typeof p.idx === 'number');
+    } catch (e) { /* resta il dettaglio base */ }
   }
 
   // Punto di rugiada (formula di Magnus): dice quanto l'aria è "appiccicosa" meglio dell'umidità relativa.
@@ -1200,6 +1350,9 @@
       document.getElementById('pressure-detail').textContent = detail;
       card.title = 'Pressione ' + word + ' (' + detail + ')';
       pressureInfo = { trend, word };
+      const back = k => (idx - k >= 0 && vals[idx - k] != null) ? vals[idx] - vals[idx - k] : null;
+      const ahead = (idx + 6 < vals.length && vals[idx + 6] != null) ? vals[idx + 6] - vals[idx] : null;
+      pressureDetail = { now: vals[idx], d3: delta, d12: back(12), d24: back(24), f6: ahead, word };
 
       // Una pressione che scende conta più di una che sale; se è stabile il riquadro resta in secondo piano.
       relevance['card-pressure'] = Math.max(15, delta < 0 ? -delta * 25 : delta * 18);
@@ -1210,7 +1363,7 @@
       document.getElementById('pressure-detail').textContent = '';
       document.getElementById('pressure-arrow').className = '';
       relevance['card-pressure'] = 15;
-      pressureInfo = null;
+      pressureInfo = null; pressureDetail = null;
     }
     ready.pressure = true; updateCards();
     if (hourlyFull) renderForecast(selectedDay);
@@ -1253,8 +1406,8 @@
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
         `&current=temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,pressure_msl,wind_speed_10m,wind_direction_10m` +
-        `&hourly=temperature_2m,precipitation_probability,weather_code,uv_index,visibility,cape,wind_gusts_10m` +
-        `&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset,uv_index_max,snowfall_sum` +
+        `&hourly=temperature_2m,precipitation_probability,weather_code,uv_index,visibility,cape,wind_gusts_10m,relative_humidity_2m,wind_speed_10m` +
+        `&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset,uv_index_max,snowfall_sum,sunshine_duration` +
         `&timezone=auto&forecast_days=3`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('http ' + res.status);
@@ -1270,6 +1423,7 @@
 
       hourlyFull = d.hourly;
       dailyFull = d.daily;
+      currentData = d.current;
 
       const [icon, text] = wmoInfo(d.current.weather_code);
       document.getElementById('hero-icon').className = 'ti ' + icon + ' icon-big';
@@ -1401,6 +1555,7 @@
         renderVisibility(visKm);
       }
     }
+    riskInfo = null;
     // Rischio temporali/grandine per il giorno selezionato:
     // combina CAPE massimo (instabilità), raffiche di vento massime,
     // e presenza del codice meteo che indica esplicitamente grandine (96/99).
@@ -1414,6 +1569,12 @@
       let score = Math.min(maxCape / 2500, 1) * 60 + Math.min(maxGust / 70, 1) * 20;
       if (hasHailCode) score += 20;
       score = Math.min(score, 100);
+      const peakAt = (arr) => { let bi = -1, bv = -Infinity; for (let i = startIdx; i < endIdx; i++) { const v = arr[i]; if (v != null && v > bv) { bv = v; bi = i; } } return bi < 0 ? null : times[bi]; };
+      riskInfo = {
+        day: dayIndex, score, maxCape, capeAt: peakAt(hourlyFull.cape), maxGust, gustAt: peakAt(hourlyFull.wind_gusts_10m || []),
+        hail: hasHailCode, hailAt: hasHailCode ? times.slice(startIdx, endIdx).filter((_, k) => codes[startIdx + k] === 96 || codes[startIdx + k] === 99) : [],
+        pCape: Math.min(maxCape / 2500, 1) * 60, pGust: Math.min(maxGust / 70, 1) * 20, pHail: hasHailCode ? 20 : 0
+      };
 
       let label, sub;
       if (score < 30) { label = 'Basso'; sub = 'Nessun segnale rilevante nei dati odierni.'; }
@@ -1826,6 +1987,386 @@
   clearBtn.addEventListener('click', () => { input.value = ''; clearBtn.hidden = true; input.focus(); showRecents(); });
   $('city-locate').addEventListener('click', useMyLocation);
   document.addEventListener('pointerdown', (e) => { if (!$('search').contains(e.target)) closeList(); });
+
+  /* =====================================================================
+     Schede di dettaglio: toccando un riquadro si apre un pannello con i dati che lo compongono.
+     Usa solo ciò che la pagina ha già scaricato (nessuna richiesta in più al tocco).
+     Si chiude con ✕, toccando fuori, con Esc, o trascinando verso il basso (touch).
+     ===================================================================== */
+  const sheetEl = document.getElementById('sheet');
+  const sheetPanel = sheetEl.querySelector('.sheet');
+  const sheetBody = document.getElementById('sheet-body');
+  const sheetCloseBtn = document.getElementById('sheet-close');
+  let sheetIsOpen = false, sheetOpener = null, sheetTimer = 0;
+
+  const f0 = n => String(Math.round(n));
+  const f1 = n => n.toFixed(1).replace('.', ',');
+  const hourOf = t => (t ? t.slice(11, 16) : '');
+  const txt = id => { const el = document.getElementById(id); return el ? el.textContent : ''; };
+  const sgn = (n, unit) => (n > 0 ? '+' : (n < 0 ? '\u2212' : '')) + f1(Math.abs(n)) + (unit ? ' ' + unit : '');
+  const dayWord = i => (DAY_LABELS[i] || 'giorno scelto').toLowerCase();
+  // Massimo (o minimo con low = true) di un array orario nella finestra [s, e): { v, t, i } oppure null
+  function peakIn(arr, s, e, low) {
+    if (!arr || !hourlyFull) return null;
+    let bi = -1, bv = low ? Infinity : -Infinity;
+    for (let i = s; i < e && i < arr.length; i++) {
+      const v = arr[i];
+      if (v != null && (low ? v < bv : v > bv)) { bv = v; bi = i; }
+    }
+    return bi < 0 ? null : { v: bv, t: hourlyFull.time[bi], i: bi };
+  }
+
+  // --- UV
+  function uvAdvice(u) {
+    if (u < 3) return 'Rischio basso: nessuna protezione particolare, salvo pelle molto chiara o molte ore all\u2019aperto.';
+    if (u < 6) return 'Rischio moderato: nelle ore centrali cerca l\u2019ombra e usa crema solare, cappello e occhiali da sole.';
+    if (u < 8) return 'Rischio alto: serve protezione. Crema SPF 30 o pi\u00f9, cappello e occhiali; riduci l\u2019esposizione nelle ore centrali.';
+    if (u < 11) return 'Rischio molto alto: protezione extra. Evita il sole nelle ore centrali e proteggi bene pelle e occhi.';
+    return 'Rischio estremo: evita l\u2019esposizione diretta al sole nelle ore centrali.';
+  }
+  function detailUV() {
+    if (!hourlyFull || !hourlyFull.uv_index) return null;
+    const uv = hourlyFull.uv_index, times = hourlyFull.time;
+    const ni = findClosestHourIndex(times.slice(0, 24));
+    const now = uv[ni];
+    const pk = peakIn(uv, 0, 24);
+    const hs = [];
+    for (let i = 0; i < 24 && i < uv.length; i++) if (uv[i] >= 3) hs.push(i);
+    const rows = [{ k: 'Adesso', v: now != null ? f1(now) : '--' }];
+    if (pk) rows.push({ k: 'Picco di oggi', v: f1(pk.v) + ' alle ' + hourOf(pk.t) });
+    rows.push({ k: 'Serve protezione (UV \u2265 3)', v: hs.length ? 'dalle ' + hourOf(times[hs[0]]) + ' alle ' + String(hs[hs.length - 1] + 1).padStart(2, '0') + ':00' : 'no' });
+    const mx = (dailyFull && dailyFull.uv_index_max) || [];
+    for (let i = 1; i < mx.length; i++) if (mx[i] != null) rows.push({ k: DAY_LABELS[i] || ('Giorno ' + (i + 1)), v: 'picco ' + f1(mx[i]) });
+    return {
+      title: 'Indice UV', value: now != null ? 'UV ' + f1(now) : '--', word: now != null ? uvWord(now) : '', sub: 'adesso',
+      groups: [{ rows }], note: [pk ? uvAdvice(pk.v) : '', 'Il valore tiene conto delle nuvole previste.']
+    };
+  }
+
+  // --- Vento (scala Beaufort: limiti in km/h, indice = forza)
+  const BEAUFORT = [
+    [1, 'Calma', 'Il fumo sale dritto verso l\u2019alto.'],
+    [6, 'Bava di vento', 'Il fumo indica la direzione del vento.'],
+    [12, 'Brezza leggera', 'Si sente il vento sul viso, le foglie frusciano.'],
+    [20, 'Brezza tesa', 'Foglie e rametti in continuo movimento.'],
+    [29, 'Vento moderato', 'Si solleva la polvere, si muovono i rami.'],
+    [39, 'Vento teso', 'Ondeggiano gli alberi piccoli con foglie.'],
+    [50, 'Vento fresco', 'Si muovono i rami grossi; l\u2019ombrello \u00e8 difficile da usare.'],
+    [62, 'Vento forte', 'Si muovono gli alberi interi; camminare controvento \u00e8 faticoso.'],
+    [75, 'Burrasca', 'Si spezzano i rami; camminare \u00e8 molto difficile.'],
+    [89, 'Burrasca forte', 'Possibili danni a tegole e camini.'],
+    [103, 'Tempesta', 'Alberi sradicati, danni agli edifici.'],
+    [118, 'Tempesta violenta', 'Danni estesi.'],
+    [Infinity, 'Uragano', 'Devastazione.']
+  ];
+  function beaufort(kmh) {
+    const i = BEAUFORT.findIndex(b => kmh < b[0]);
+    return { force: i, name: BEAUFORT[i][1], desc: BEAUFORT[i][2] };
+  }
+  function detailWind() {
+    if (!currentData || typeof currentData.wind_speed_10m !== 'number') return null;
+    const sp = currentData.wind_speed_10m, deg = currentData.wind_direction_10m;
+    const b = beaufort(sp), hasDeg = typeof deg === 'number';
+    const ni = hourlyFull ? findClosestHourIndex(hourlyFull.time.slice(0, 24)) : null;
+    const gust = (hourlyFull && hourlyFull.wind_gusts_10m && ni != null) ? hourlyFull.wind_gusts_10m[ni] : null;
+    const rows = [];
+    if (hasDeg) rows.push({ k: 'Direzione', v: 'da ' + degToName(deg) + ' \u00b7 ' + f0(deg) + '\u00b0' });
+    rows.push({ k: 'Scala Beaufort', v: b.force + ' \u00b7 ' + b.name });
+    if (gust != null) rows.push({ k: 'Raffiche adesso', v: f0(gust) + ' km/h' });
+    const ws = peakIn(hourlyFull && hourlyFull.wind_speed_10m, 0, 24), gp = peakIn(hourlyFull && hourlyFull.wind_gusts_10m, 0, 24);
+    if (ws) rows.push({ k: 'Vento massimo oggi', v: f0(ws.v) + ' km/h alle ' + hourOf(ws.t) });
+    if (gp) rows.push({ k: 'Raffica massima oggi', v: f0(gp.v) + ' km/h alle ' + hourOf(gp.t) });
+    const gt = peakIn(hourlyFull && hourlyFull.wind_gusts_10m, 24, 48);
+    if (gt) rows.push({ k: 'Domani, raffica massima', v: f0(gt.v) + ' km/h' });
+    return {
+      title: 'Vento', value: f0(sp) + ' km/h', word: b.name, sub: hasDeg ? 'da ' + degToName(deg) : '',
+      groups: [{ rows }], note: [b.desc, 'Misurato a 10 metri dal suolo, in campo aperto.']
+    };
+  }
+
+  // --- Luna (calcolata in locale sul ciclo medio)
+  function detailMoon() {
+    const now = new Date(), m = moonInfo(now), pct = Math.round(m.illum * 100);
+    const toFull = ((SYNODIC / 2 - m.age) + SYNODIC) % SYNODIC, toNew = (SYNODIC - m.age) % SYNODIC;
+    const dFmt = days => new Date(now.getTime() + days * 86400000).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' });
+    const inDays = days => { const n = Math.round(days); return n <= 0 ? 'oggi' : (n === 1 ? 'domani' : 'tra ' + n + ' giorni'); };
+    let visual = null;
+    const src = document.getElementById('moon-svg');
+    if (src) {
+      visual = src.cloneNode(true);
+      visual.removeAttribute('id'); visual.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+      visual.setAttribute('width', '110'); visual.setAttribute('height', '110'); visual.classList.add('sheet-moon');
+    }
+    return {
+      title: 'Fase lunare', value: m.name, word: pct + '% illuminata', sub: '', visual,
+      groups: [{ rows: [
+        { k: 'Et\u00e0 della luna', v: f1(m.age) + ' giorni' },
+        { k: 'Prossima luna piena', v: dFmt(toFull) + ' \u00b7 ' + inDays(toFull) },
+        { k: 'Prossima luna nuova', v: dFmt(toNew) + ' \u00b7 ' + inDays(toNew) }
+      ] }],
+      note: ['Date calcolate sul ciclo lunare medio (29,53 giorni): possono scostarsi di circa un giorno dalle effemeridi ufficiali.']
+    };
+  }
+
+  // --- Umidità
+  function detailHumidity() {
+    if (!currentData) return null;
+    const rh = currentData.relative_humidity_2m, t = currentData.temperature_2m;
+    if (typeof rh !== 'number' || typeof t !== 'number') return null;
+    const dew = dewPoint(t, rh);
+    const rows = [
+      { k: 'Umidit\u00e0 relativa', v: f0(rh) + '%' },
+      { k: 'Punto di rugiada', v: f1(dew) + ' \u00b0C' },
+      { k: 'Temperatura', v: f1(t) + ' \u00b0C' }
+    ];
+    const hr = hourlyFull && hourlyFull.relative_humidity_2m;
+    const lo = peakIn(hr, 0, 24, true), hi = peakIn(hr, 0, 24);
+    if (lo) rows.push({ k: 'Oggi, minima', v: f0(lo.v) + '% alle ' + hourOf(lo.t) });
+    if (hi) rows.push({ k: 'Oggi, massima', v: f0(hi.v) + '% alle ' + hourOf(hi.t) });
+    return {
+      title: 'Umidit\u00e0', value: f0(rh) + '%', word: txt('hum-label'), sub: 'adesso',
+      groups: [{ rows }],
+      note: ['Il punto di rugiada \u00e8 la temperatura a cui l\u2019aria si satura di vapore e compaiono rugiada o nebbia. Pi\u00f9 \u00e8 alto, pi\u00f9 l\u2019aria \u00e8 appiccicosa: oltre 18 \u00b0C si avverte afa, sotto 10 \u00b0C l\u2019aria \u00e8 secca.']
+    };
+  }
+
+  // --- Temporali / grandine (le componenti sono quelle calcolate dalla card)
+  function detailRisk() {
+    const r = riskInfo;
+    if (!r) return null;
+    const rows = [
+      { k: 'Energia dei temporali (CAPE)', v: f0(r.maxCape) + ' J/kg' + (r.capeAt && r.maxCape > 0 ? ' alle ' + hourOf(r.capeAt) : '') },
+      { k: 'Raffica massima', v: f0(r.maxGust) + ' km/h' + (r.gustAt ? ' alle ' + hourOf(r.gustAt) : '') },
+      { k: 'Segnale di grandine', v: r.hail ? 's\u00ec, ' + (r.hailAt.length > 1 ? hourOf(r.hailAt[0]) + '\u2013' + hourOf(r.hailAt[r.hailAt.length - 1]) : hourOf(r.hailAt[0])) : 'nessuno' }
+    ];
+    const snow = (dailyFull && dailyFull.snowfall_sum) ? dailyFull.snowfall_sum[r.day] : 0;
+    if (snow > 0) rows.push({ k: 'Neve prevista', v: f1(snow) + ' cm' });
+    return {
+      title: txt('risk-title') || 'Temporali \u00b7 grandine', value: txt('risk-label'),
+      word: 'punteggio ' + f0(r.score) + ' su 100', sub: dayWord(r.day),
+      groups: [
+        { rows },
+        { title: 'Come si calcola il punteggio', rows: [
+          { k: 'Energia (CAPE)', v: f0(r.pCape) + ' / 60' },
+          { k: 'Vento (raffiche)', v: f0(r.pGust) + ' / 20' },
+          { k: 'Grandine prevista', v: f0(r.pHail) + ' / 20' },
+          { k: 'Totale', v: f0(r.score) + ' / 100' }
+        ] }
+      ],
+      note: ['Il CAPE misura l\u2019energia disponibile per i temporali: sotto 1000 J/kg l\u2019instabilit\u00e0 \u00e8 debole, tra 1000 e 2500 moderata, oltre 2500 forte.',
+             'Stima ricavata dai dati del modello meteo: non sostituisce le allerte ufficiali della Protezione Civile.']
+    };
+  }
+
+  // --- Qualità dell'aria
+  function aqiWord(a) { return a <= 20 ? 'Buona' : (a <= 40 ? 'Discreta' : (a <= 60 ? 'Moderata' : (a <= 80 ? 'Scarsa' : 'Pessima'))); }
+  function aqiAdvice(a) {
+    if (a <= 20) return 'Aria pulita, nessun problema.';
+    if (a <= 40) return 'Qualit\u00e0 dell\u2019aria accettabile.';
+    if (a <= 60) return 'Possibile fastidio per i soggetti sensibili.';
+    if (a <= 80) return 'Aria inquinata: limita l\u2019attivit\u00e0 fisica intensa all\u2019aperto.';
+    return 'Aria molto inquinata: evita l\u2019attivit\u00e0 fisica all\u2019aperto.';
+  }
+  function detailAqi() {
+    const a = aqiDetail;
+    if (!a || typeof a.aqi !== 'number') return null;
+    const groups = [];
+    if (a.pollutants && a.pollutants.length) {
+      const top = a.pollutants.reduce((m, p) => (p.idx > m.idx ? p : m));
+      groups.push({ rows: [{ k: 'Inquinante principale', v: top.name }] });
+      groups.push({ title: 'Inquinanti', rows: a.pollutants.map(p => ({
+        k: p.name + (typeof p.conc === 'number' ? ' \u00b7 ' + (p.conc >= 10 ? f0(p.conc) : f1(p.conc)) + ' ' + p.unit : ''),
+        v: 'AQI ' + f0(p.idx) + ' \u00b7 ' + aqiWord(p.idx)
+      })) });
+    } else if (typeof a.pm2_5 === 'number') {
+      groups.push({ rows: [{ k: 'PM2,5', v: f1(a.pm2_5) + ' \u00b5g/m\u00b3' }] });
+    }
+    return {
+      title: 'Qualit\u00e0 dell\u2019aria', value: 'AQI ' + f0(a.aqi), word: txt('aqi-label') || aqiWord(a.aqi), sub: 'indice europeo, adesso',
+      groups,
+      note: [aqiAdvice(a.aqi), 'L\u2019indice complessivo \u00e8 il peggiore tra i cinque inquinanti e pu\u00f2 superare 100.', 'Dati: CAMS (Copernicus) tramite Open-Meteo.']
+    };
+  }
+
+  // --- Sole
+  function detailSun() {
+    if (!sunTimes) return null;
+    const { rise, set } = sunTimes, len = set - rise;
+    const rows = [
+      { k: 'Alba', v: hhmm(rise) }, { k: 'Tramonto', v: hhmm(set) },
+      { k: 'Mezzogiorno solare', v: hhmm(new Date((rise.getTime() + set.getTime()) / 2)) },
+      { k: 'Durata del giorno', v: fmtDur(len) }
+    ];
+    const sun = dailyFull && dailyFull.sunshine_duration && dailyFull.sunshine_duration[0];
+    if (typeof sun === 'number') rows.push({ k: 'Sole diretto previsto', v: fmtDur(sun * 1000) });
+    if (dailyFull && dailyFull.sunrise && dailyFull.sunrise[1] && dailyFull.sunset && dailyFull.sunset[1]) {
+      const dsec = ((new Date(dailyFull.sunset[1]) - new Date(dailyFull.sunrise[1])) - len) / 1000, a = Math.abs(dsec);
+      rows.push({ k: 'Domani, rispetto a oggi', v: a < 1 ? 'uguale' : (dsec > 0 ? '+' : '\u2212') + Math.floor(a / 60) + ' min ' + String(Math.round(a % 60)).padStart(2, '0') + ' s' });
+    }
+    return {
+      title: 'Alba e tramonto', value: fmtDur(len), word: 'di luce', sub: txt('sun-sub'),
+      groups: [{ rows }],
+      note: ['Il sole diretto \u00e8 sempre meno della durata del giorno: dipende da nuvole e foschia previste.']
+    };
+  }
+
+  // --- Visibilità (giorno selezionato)
+  function detailVisibility() {
+    if (!hourlyFull || !hourlyFull.visibility) return null;
+    const s = selectedDay * 24, e = Math.min(s + 24, hourlyFull.time.length);
+    const lo = peakIn(hourlyFull.visibility, s, e, true), hi = peakIn(hourlyFull.visibility, s, e);
+    if (!lo || !hi) return null;
+    const km = v => { const k = v / 1000; return (k >= 10 ? f0(k) : f1(k)) + ' km'; };
+    const rows = [
+      { k: 'Minima del giorno', v: km(lo.v) + ' alle ' + hourOf(lo.t) },
+      { k: 'Massima del giorno', v: km(hi.v) + ' alle ' + hourOf(hi.t) }
+    ];
+    let spread = null;
+    const T = hourlyFull.temperature_2m && hourlyFull.temperature_2m[lo.i], RH = hourlyFull.relative_humidity_2m && hourlyFull.relative_humidity_2m[lo.i];
+    if (typeof T === 'number' && typeof RH === 'number') {
+      spread = T - dewPoint(T, RH);
+      rows.push({ k: 'Scarto temperatura\u2013rugiada (' + hourOf(lo.t) + ')', v: f1(spread) + ' \u00b0C' });
+    }
+    return {
+      title: 'Visibilit\u00e0', value: txt('stat-visibility'), word: txt('stat-fog-note'),
+      sub: selectedDay === 0 ? 'adesso' : 'media di ' + dayWord(selectedDay),
+      groups: [{ rows }],
+      note: ['Oltre 10 km: ottima \u00b7 4\u201310 km: buona \u00b7 1\u20134 km: foschia \u00b7 sotto 1 km: nebbia.',
+             spread != null && spread <= 2
+               ? 'Con poco scarto tra temperatura e punto di rugiada l\u2019aria \u00e8 quasi satura: con vento debole la nebbia \u00e8 probabile.'
+               : 'Pi\u00f9 lo scarto tra temperatura e punto di rugiada \u00e8 piccolo, pi\u00f9 la nebbia \u00e8 probabile (di solito sotto i 2 \u00b0C con vento debole).']
+    };
+  }
+
+  // --- Pressione
+  function detailPressure() {
+    const p = pressureDetail;
+    if (!p) return null;
+    const shown = parseFloat(txt('stat-pressure').replace(',', '.'));
+    const now = isFinite(shown) ? shown : p.now;
+    const rows = [{ k: 'Ultime 3 ore', v: sgn(p.d3, 'hPa') }];
+    if (p.d12 != null) rows.push({ k: 'Ultime 12 ore', v: sgn(p.d12, 'hPa') });
+    if (p.d24 != null) rows.push({ k: 'Ultime 24 ore', v: sgn(p.d24, 'hPa') });
+    if (p.f6 != null) rows.push({ k: 'Prossime 6 ore (previsione)', v: sgn(p.f6, 'hPa') });
+    rows.push({ k: 'Livello', v: now >= 1020 ? 'alta pressione' : (now <= 1010 ? 'bassa pressione' : 'nella norma') });
+    return {
+      title: 'Pressione', value: f0(now) + ' hPa', word: p.word, sub: 'a livello del mare',
+      groups: [{ rows }],
+      note: ['Valore ridotto al livello del mare (riferimento 1013 hPa). Una pressione che scende in fretta spesso anticipa un peggioramento, una che sale un miglioramento; con pressione alta il tempo \u00e8 in genere stabile.']
+    };
+  }
+
+  const DETAIL = {
+    'uv-card': detailUV, 'card-wind': detailWind, 'card-moon': detailMoon, 'hum-card': detailHumidity,
+    'risk-card': detailRisk, 'aqi-card': detailAqi, 'card-sun': detailSun,
+    'card-visibility': detailVisibility, 'card-pressure': detailPressure
+  };
+
+  const mk = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+  function renderSheet(m, card) {
+    document.getElementById('sheet-title').textContent = m.title;
+    const badge = document.getElementById('sheet-badge'), src = card.querySelector('.icon-badge');
+    badge.className = src ? src.className : 'icon-badge'; badge.textContent = '';
+    if (src && src.firstElementChild) badge.appendChild(src.firstElementChild.cloneNode(true));
+    sheetBody.textContent = '';
+    const hero = mk('div', 'sheet-hero');
+    if (m.visual) hero.appendChild(m.visual);
+    hero.appendChild(mk('p', 'sheet-value', m.value));
+    if (m.word) hero.appendChild(mk('p', 'sheet-word', m.word));
+    if (m.sub) hero.appendChild(mk('p', 'sheet-sub', m.sub));
+    sheetBody.appendChild(hero);
+    (m.groups || []).forEach(g => {
+      if (g.title) sheetBody.appendChild(mk('p', 'sheet-gtitle', g.title));
+      const list = mk('div', 'sheet-list');
+      g.rows.forEach(r => { const row = mk('div', 'sheet-row'); row.appendChild(mk('span', 'sheet-k', r.k)); row.appendChild(mk('span', 'sheet-v', r.v)); list.appendChild(row); });
+      sheetBody.appendChild(list);
+    });
+    (m.note || []).filter(Boolean).forEach(t => sheetBody.appendChild(mk('p', 'sheet-note', t)));
+  }
+
+  function setBackgroundInert(on) {
+    Array.from(document.body.children).forEach(n => {
+      if (n === sheetEl || n.tagName === 'SCRIPT') return;
+      if (on) n.setAttribute('inert', ''); else n.removeAttribute('inert');
+    });
+  }
+  function openSheet(card) {
+    const build = DETAIL[card.id];
+    const m = build ? build() : null;
+    if (!m || sheetIsOpen) return;
+    clearTimeout(sheetTimer);
+    renderSheet(m, card);
+    sheetOpener = card; sheetIsOpen = true;
+    const sbw = window.innerWidth - document.documentElement.clientWidth;   // niente scatto quando sparisce la barra di scorrimento
+    document.body.style.paddingRight = sbw > 0 ? sbw + 'px' : '';
+    document.body.classList.add('sheet-open');
+    setBackgroundInert(true);
+    sheetPanel.style.transform = ''; sheetPanel.style.transition = '';
+    sheetEl.hidden = false;
+    void sheetEl.offsetWidth;
+    sheetEl.classList.add('open');
+    sheetBody.scrollTop = 0;
+    sheetPanel.focus({ preventScroll: true });
+  }
+  function closeSheet() {
+    if (!sheetIsOpen) return;
+    sheetIsOpen = false;
+    sheetPanel.style.transition = ''; sheetPanel.style.transform = '';
+    sheetEl.classList.remove('open');
+    const done = () => {
+      sheetEl.hidden = true;
+      document.body.classList.remove('sheet-open'); document.body.style.paddingRight = '';
+      setBackgroundInert(false);
+      if (sheetOpener && !sheetOpener.hidden) sheetOpener.focus({ preventScroll: true });
+      sheetOpener = null;
+    };
+    if (prefersReduced()) done(); else sheetTimer = setTimeout(done, 340);
+  }
+
+  // Apertura: clic, Invio o Spazio sui riquadri
+  (function wireCards() {
+    const grid = document.getElementById('stats-grid');
+    grid.querySelectorAll('.stat-card').forEach(c => { c.setAttribute('role', 'button'); c.tabIndex = 0; c.setAttribute('aria-haspopup', 'dialog'); });
+    grid.addEventListener('click', e => { const c = e.target.closest('.stat-card'); if (c) openSheet(c); });
+    grid.addEventListener('keydown', e => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const c = e.target.closest('.stat-card');
+      if (c && e.target === c) { e.preventDefault(); openSheet(c); }
+    });
+  })();
+  // Chiusura: pulsante, tocco fuori dal pannello, Esc (e Tab resta dentro il pannello)
+  sheetCloseBtn.addEventListener('click', closeSheet);
+  sheetEl.addEventListener('click', e => { if (e.target === sheetEl) closeSheet(); });
+  document.addEventListener('keydown', e => {
+    if (!sheetIsOpen) return;
+    if (e.key === 'Escape') { e.preventDefault(); closeSheet(); }
+    else if (e.key === 'Tab') { e.preventDefault(); sheetCloseBtn.focus(); }
+  });
+  // Trascinando l'intestazione verso il basso (dito o penna) il pannello segue e si chiude oltre una soglia
+  (function wireSwipe() {
+    const head = document.getElementById('sheet-head');
+    let y0 = null, t0 = 0, dy = 0;
+    head.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse' || !sheetIsOpen) return;
+      y0 = e.clientY; t0 = Date.now(); dy = 0;
+      sheetPanel.style.transition = 'none';
+      if (head.setPointerCapture) { try { head.setPointerCapture(e.pointerId); } catch (_) {} }
+    });
+    head.addEventListener('pointermove', e => {
+      if (y0 == null) return;
+      dy = Math.max(0, e.clientY - y0);
+      sheetPanel.style.transform = 'translateY(' + dy + 'px)';
+    });
+    const end = () => {
+      if (y0 == null) return;
+      const fast = dy / Math.max(1, Date.now() - t0) > 0.6;
+      y0 = null;
+      sheetPanel.style.transition = '';
+      if (dy > 90 || (fast && dy > 20)) closeSheet(); else sheetPanel.style.transform = '';
+    };
+    head.addEventListener('pointerup', end);
+    head.addEventListener('pointercancel', end);
+  })();
 
   // Avvio: l'ultima città scelta, altrimenti la schermata di benvenuto
   setInterval(updateSun, 60000);
